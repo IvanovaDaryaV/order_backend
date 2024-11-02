@@ -12,7 +12,7 @@ namespace Order.Models
         [Required]
         public string Name { get; set; }
         [Required]
-        public string Status { get; set; }
+        public bool Status { get; set; }
         public int Context_id { get; set; }
         public int Priority { get; set; }
         public DateOnly CalendarDate { get; set; }

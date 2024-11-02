@@ -4,6 +4,13 @@ namespace Order.Models
 {
     public class User
     {
+        public User()
+        {
+            Events = new List<Event>();
+            Tasks = new List<Task>();
+            Projects = new List<Project>();
+        }
+
         [Key]
         [Required]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -15,9 +22,9 @@ namespace Order.Models
         [Required]
         public string PasswordHash { get; set; }
 
-        public ICollection<Task> Tasks { get; set; } //коллекция задач
-        public ICollection<Project> Projects { get; set; } //коллекция проектов
-        public ICollection<Event> Events { get; set; } //коллекция событий
+        public ICollection<Task> Tasks { get; set; } = new List<Task>(); //коллекция задач
+        public ICollection<Project> Projects { get; set; } = new List<Project>(); //коллекция проектов
+        public ICollection<Event> Events { get; set; } = new List<Event>(); //коллекция событий
 
     }
 }
