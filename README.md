@@ -1,5 +1,7 @@
 Чтобы получить данные по id юзера:
 
+Формат URL: /api/Calendar/Weekly/UserId?data=["YYYY-MM-DD, YYYY-MM-DD"]
+
 Пример URL: http://localhost:5141/api/Calendar/Weekly/123e4567-e89b-12d3-a456-426614174000?data=%5B%222024-11-24%22%2C%20%222025-07-20%22%5D
 
 Возвращаются данные:
