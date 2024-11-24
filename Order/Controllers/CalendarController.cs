@@ -46,7 +46,7 @@ namespace Order.Controllers
                 .Include(u => u.Tasks)
                 .Include(u => u.Events)
                 .FirstOrDefaultAsync(u => u.Id == userId);
-
+               
             if (user == null)
                 return NotFound($"User with ID {userId} not found.");
 
@@ -61,20 +61,16 @@ namespace Order.Controllers
             if (user.Tasks == null || user.Events == null)
                 return StatusCode(500, "Tasks or Events are null even after loading.");
 
-            // Фильтрация задач и событий
-            //var filteredTasks = user.Tasks
-            //    .Where(task => task.HardDeadline >= startDate && task.HardDeadline <= endDate)
-            //    .ToList();
-
-            //var filteredEvents = user.Events
-            //    .Where(evt => evt.CalendarDate >= startDate && evt.CalendarDate <= endDate)
-            //    .ToList();
+            var contextNames = await _context.Contexts
+                .Select(c => c.Name)
+                .ToListAsync();
 
             return Ok(new
             {
-                //user,
+                user.Id,
                 Tasks = filteredTasks,
-                Events = filteredEvents
+                Events = filteredEvents,
+                Contexts = contextNames
             });
         }
     }
