@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Order;
 using Order.Models;
+using System.Text.Json;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -86,4 +87,6 @@ public class UserController : ControllerBase
         if (user == null) return NotFound();
         return Ok(user);
     }
+    
+
 }

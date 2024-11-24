@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Order.Models
 {
@@ -26,6 +27,7 @@ namespace Order.Models
         public bool IsPrivate { get; set; }
 
         [ForeignKey("UserId")]
+        [JsonIgnore]
         public User User { get; set; } //навигационное свойство
         [ForeignKey("ContextId")]
         public Context Context { get; set; } //навигационное свойство
