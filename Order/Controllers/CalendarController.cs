@@ -20,11 +20,9 @@ namespace Order.Controllers
         [HttpGet("Weekly/{userId}")]
         public async Task<IActionResult> GetWeeklyData(Guid userId, [FromQuery] string data)
         {
-            // Проверяем, что контекст не null
             if (_context == null)
                 return StatusCode(500, "Database context is not initialized.");
 
-            //// Проверяем формат данных
             if (string.IsNullOrEmpty(data))
                 return BadRequest("Date range is required.");
 
@@ -61,8 +59,15 @@ namespace Order.Controllers
             if (user.Tasks == null || user.Events == null)
                 return StatusCode(500, "Tasks or Events are null even after loading.");
 
-            var contextNames = await _context.Contexts
+            var contextIds = filteredTasks.Select(t => t.ContextId)
+                .Concat(filteredEvents.Select(e => e.ContextId))
+                .Distinct()
+                .ToList();
+
+            var uniqueContextNames = await _context.Contexts
+                .Where(c => contextIds.Contains(c.Id))
                 .Select(c => c.Name)
+                .Distinct()
                 .ToListAsync();
 
             return Ok(new
@@ -70,7 +75,7 @@ namespace Order.Controllers
                 user.Id,
                 Tasks = filteredTasks,
                 Events = filteredEvents,
-                Contexts = contextNames
+                Contexts = uniqueContextNames
             });
         }
     }
