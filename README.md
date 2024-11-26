@@ -13,10 +13,10 @@
 - список уникальныз названий контекстов для полученных задач и ивентов (список строк)
 
 **UserController**
--/api/user/create (POST)
--/api/user/id/userid (PATCH) 
--/api/user/id/userid (DELETE) 
--/api/user?email='dfgdf' (GET) 
+- /api/user/create (POST)
+- /api/user/id/userid (PATCH) 
+- /api/user/id/userid (DELETE) 
+- /api/user?email='string' (GET) 
 
 **CRUD для основных сущностей: Create, Update, Delete, GetById**
 - TaskController
