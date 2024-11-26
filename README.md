@@ -1,3 +1,5 @@
+**CalendarController**
+
 Чтобы получить данные по id юзера:
 
 Формат URL: /api/Calendar/Weekly/UserId?data=["YYYY-MM-DD, YYYY-MM-DD"]
@@ -9,5 +11,16 @@
 - список задач (все поля)
 - список ивентов (все поля)
 - список уникальныз названий контекстов для полученных задач и ивентов (список строк)
+
+**UserController**
+-/api/user/create (POST)
+-/api/user/id/userid (PATCH) 
+-/api/user/id/userid (DELETE) 
+-/api/user?email='dfgdf' (GET) 
+
+**CRUD для основных сущностей: Create, Update, Delete, GetById**
+- TaskController
+- EventController
+- ProjectController
 
 В backup_order.sql лежит бэкап моей тестовой бдшки, там буквально одна запись, я тестила на ней.
