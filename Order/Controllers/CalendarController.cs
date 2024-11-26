@@ -59,14 +59,15 @@ namespace Order.Controllers
             if (user.Tasks == null || user.Events == null)
                 return StatusCode(500, "Tasks or Events are null even after loading.");
 
-            var contextIds = filteredTasks.Select(t => t.ContextId)
+            var contextIds = filteredTasks
+                .Select(t => (int?)t.ContextId)
                 .Concat(filteredEvents.Select(e => e.ContextId))
                 .Distinct()
                 .ToList();
 
-            var uniqueContextNames = await _context.Contexts
-                .Where(c => contextIds.Contains(c.Id))
-                .Select(c => c.Name)
+            var contexts = await _context.Contexts
+                //.Where(c => contextIds.Contains(c.Id))
+                //.Select(c => c.Name)
                 .Distinct()
                 .ToListAsync();
 
@@ -75,7 +76,7 @@ namespace Order.Controllers
                 user.Id,
                 Tasks = filteredTasks,
                 Events = filteredEvents,
-                Contexts = uniqueContextNames
+                Contexts = contexts
             });
         }
     }
