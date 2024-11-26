@@ -3,18 +3,20 @@ using Microsoft.EntityFrameworkCore;
 using Order;
 using Order.Models;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 
 [Route("api/[controller]")]
 [ApiController]
 public class UserController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly IPasswordHasher<User> _passwordHasher;
     public UserController(ApplicationDbContext context)
     {
         _context = context;
+        _passwordHasher = new PasswordHasher<User>();
     }
 
-    //возврат данных о пользователе по его идинтификатору
     [HttpGet("id/{userId}")]
     public async Task<IActionResult> GetUserById(Guid userId)
     {
@@ -23,9 +25,8 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
-    //создание пользователя
     [HttpPost("create")]
-    public async Task<IActionResult> CreateUser(string name, string email, string hash)
+    public async Task<IActionResult> CreateUser(string name, string email, string password)
     {
         try
         {
@@ -33,25 +34,24 @@ public class UserController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 Name = name,
-                Email = email,
-                PasswordHash = hash
+                Email = email
             };
 
-            // Добавляем пользователя в контекст
+            // Хэширование пароля
+            newUser.PasswordHash = _passwordHasher.HashPassword(newUser, password);
+
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            // Возвращаем результат создания
             return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser);
         }
         catch (Exception ex)
         {
-            // Запись ошибки в логи (можно использовать ILogger)
             return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
 
-    /*[HttpPatch("id/{userId}")]
+    [HttpPatch("id/{userId}")]
     public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] User updatedUser)
     {
         var user = await _context.Users.FindAsync(userId);
@@ -62,7 +62,7 @@ public class UserController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
-    }*/
+    }
 
     [HttpDelete("id/{userId}")]
     public async Task<IActionResult> DeleteUser(Guid userId)
@@ -80,9 +80,9 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetUserByEmail(string email)
     {
         var user = await _context.Users
-            //.Include(u => u.Events)   
-            /*.Include(u => u.Projects)
-            .Include(u => u.Tasks)     */
+            .Include(u => u.Events)   
+            .Include(u => u.Projects)
+            .Include(u => u.Tasks)    
             .FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return NotFound();
         return Ok(user);

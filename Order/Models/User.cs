@@ -19,12 +19,11 @@ namespace Order.Models
         public string Name { get; set; }
         [Required]
         public string Email { get; set; }
-        [Required]
-        public string PasswordHash { get; set; }
+        public string? PasswordHash { get; set; }
 
-        public ICollection<Task> Tasks { get; set; } = new List<Task>(); //коллекция задач
-        public ICollection<Project> Projects { get; set; } = new List<Project>(); //коллекция проектов
-        public ICollection<Event> Events { get; set; } = new List<Event>(); //коллекция событий
+        public ICollection<Task>? Tasks { get; set; } = new List<Task>(); 
+        public ICollection<Project>? Projects { get; set; } = new List<Project>(); 
+        public ICollection<Event>? Events { get; set; } = new List<Event>();
 
     }
 }
