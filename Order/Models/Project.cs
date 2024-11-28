@@ -6,6 +6,8 @@ namespace Order.Models
 {
     public class Project
     {
+        internal readonly object Tasks;
+
         [Key]
         [Required]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -21,8 +23,9 @@ namespace Order.Models
         public bool Status { get; set; }
 
         [ForeignKey("UserId")]
-        public User? User { get; set; } //навигационное свойство
+        public User? User { get; set; } 
         [ForeignKey("ContextId")]
-        public Context? Context { get; set; } //навигационное свойство
+        public Context? Context { get; set; }
+        public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
     }
 }

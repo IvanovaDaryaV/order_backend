@@ -25,13 +25,14 @@ namespace Order.Models
         public int? EventId { get; set; }
         public DateOnly? CallendarDate { get; set; }
         public bool? IsPrivate { get; set; }
+        public int? ProjectId { get; set; }
 
         [ForeignKey("UserId")]
         [JsonIgnore]
-        public User? User { get; set; } //навигационное свойство
+        public User? User { get; set; } 
         [ForeignKey("ContextId")]
-        public Context? Context { get; set; } //навигационное свойство
+        public Context? Context { get; set; }
         [ForeignKey("EventId")]
-        public Event? Event { get; set; } //навигационное свойство
+        public Event? Event { get; set; } 
     }
 }

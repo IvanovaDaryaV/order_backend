@@ -22,9 +22,16 @@ namespace Order.Controllers.EntitiesControllers
         public async Task<IActionResult> GetEventById(int id)
         {
             var evt = await _context.Events.FindAsync(id);
+            var tasks = _context.Tasks
+                        .Where(task => evt.TaskIds.Contains(task.Id))
+                        .ToList();
             if (evt == null)
                 return NotFound();
-            return Ok(evt);
+            return Ok(new
+            {
+                evt,
+                tasks
+            });
         }
 
         // POST: api/Event
@@ -41,7 +48,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Event/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateEvent(int id, [FromBody] Event updatedEvent)
+        public async Task<IActionResult> UpdateEvent(int id, [FromBody] Event updatedEvent, [FromServices] TaskService taskService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -49,6 +56,29 @@ namespace Order.Controllers.EntitiesControllers
             var evt = await _context.Events.FindAsync(id);
             if (evt == null)
                 return NotFound();
+
+            // Если переданы новые задачи, привязываем их
+            if (updatedEvent.TaskIds != null && updatedEvent.TaskIds.Any())
+            {
+                var tasksToUpdate = await _context.Tasks
+                    .Where(t => updatedEvent.TaskIds.Contains(t.Id))
+                    .ToListAsync();
+
+                // Если количество найденных задач не совпадает с количеством переданных id
+                if (tasksToUpdate.Count != updatedEvent.TaskIds.Count)
+                {
+                    return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
+                }
+                else
+                {
+                    await taskService.UnassignTasksFromEvent(id);
+                    foreach (var task in tasksToUpdate)
+                    {
+                        await taskService.AssignTasksToEvent(id, updatedEvent.TaskIds);
+                    }
+                }
+
+            }
 
             evt.Name = updatedEvent.Name;
             evt.Status = updatedEvent.Status;
@@ -59,6 +89,7 @@ namespace Order.Controllers.EntitiesControllers
             evt.UserId = updatedEvent.UserId;
             evt.User = updatedEvent.User;
             evt.Context = updatedEvent.Context;
+            evt.TaskIds = updatedEvent.TaskIds;
 
             _context.Events.Update(evt);
             await _context.SaveChangesAsync();

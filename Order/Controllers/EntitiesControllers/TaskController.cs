@@ -65,15 +65,20 @@ namespace Order.Controllers.EntitiesControllers
 
         // DELETE: api/Task/{id}
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteTask(int id)
+        public async Task<IActionResult> DeleteTask(int id, [FromServices] TaskService taskService)
         {
             var task = await _context.Tasks.FindAsync(id);
             if (task == null)
                 return NotFound();
-
-            _context.Tasks.Remove(task);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                await taskService.RemoveTask(id);
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
