@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order;
 using Order.Models;
+using Order.Models.DTO;
 using System.Text.Json;
 
 namespace Order.Controllers.EntitiesControllers
@@ -11,10 +13,12 @@ namespace Order.Controllers.EntitiesControllers
     public class EventController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public EventController(ApplicationDbContext context)
+        public EventController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Event/{id}
@@ -48,7 +52,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Event/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateEvent(int id, [FromBody] Event updatedEvent, [FromServices] TaskService taskService)
+        public async Task<IActionResult> UpdateEvent(int id, [FromBody] EventDto updatedEvent, [FromServices] TaskService taskService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -76,23 +80,17 @@ namespace Order.Controllers.EntitiesControllers
                     {
                         await taskService.AssignTasksToEvent(id, updatedEvent.TaskIds);
                     }
+
+                    // Обновление полей объекта маппингом
+                    _mapper.Map(updatedEvent, evt);
+
+                    _context.Events.Update(evt);
+                    await _context.SaveChangesAsync();
                 }
 
             }
 
-            evt.Name = updatedEvent.Name;
-            evt.Status = updatedEvent.Status;
-            evt.ContextId = updatedEvent.ContextId;
-            evt.Priority = updatedEvent.Priority;
-            evt.CalendarDate = updatedEvent.CalendarDate;
-            evt.IsPrivate = updatedEvent.IsPrivate;
-            evt.UserId = updatedEvent.UserId;
-            evt.User = updatedEvent.User;
-            evt.Context = updatedEvent.Context;
-            evt.TaskIds = updatedEvent.TaskIds;
-
-            _context.Events.Update(evt);
-            await _context.SaveChangesAsync();
+           
             return NoContent();
         }
 

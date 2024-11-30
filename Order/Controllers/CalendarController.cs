@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Order;
 using Order.Models;
+//using Order.Services;
 using System.Text.Json;
 
 namespace Order.Controllers
@@ -44,7 +45,7 @@ namespace Order.Controllers
                 .Include(u => u.Tasks)
                 .Include(u => u.Events)
                 .FirstOrDefaultAsync(u => u.Id == userId);
-               
+
             if (user == null)
                 return NotFound($"User with ID {userId} not found.");
 
@@ -79,5 +80,94 @@ namespace Order.Controllers
                 Contexts = contexts
             });
         }
+
+        // создание ссылки на календарь
+        [HttpPost("Calendar/Share")]
+        public IActionResult ShareCalendar(int calendarId, [FromBody] ShareRequest request)
+        {
+            // Проверяем наличие календаря
+            /*var calendar = calendarService.GetCalendarById(calendarId);
+            if (calendar == null)
+            {
+                return NotFound("Calendar not found.");
+            }*/
+
+            // Проверяем корректность периода
+            if (request.StartDate >= request.EndDate)
+            {
+                return BadRequest("StartDate must be earlier than EndDate.");
+            }
+
+            // Генерируем уникальный код ссылки
+            var uniqueCode = Guid.NewGuid().ToString("N");
+
+            // Сохраняем данные о ссылке в БД
+            /*_sharedLinkRepository.Add(new SharedLink
+            {
+                CalendarId = calendarId,
+                Code = uniqueCode,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                CreatedAt = DateTime.UtcNow
+            });*/
+
+            // Возвращаем ссылку
+            return Ok(new { ShareLink = $" http://localhost:5141/Calendar/Shared/{uniqueCode}" });
+        }
+
+        // просмотр по ссылке
+        //[HttpGet("calendar/shared/{code}")]
+        /*public IActionResult GetSharedCalendar(string code)
+        {
+            // Проверяем, существует ли ссылка
+            var sharedLink = _sharedLinkRepository.GetByCode(code);
+            if (sharedLink == null)
+            {
+                return NotFound("Invalid or expired link.");
+            }
+
+            // Получаем события из календаря за указанный период
+            var events = _eventService.GetEventsByCalendarIdAndPeriod(
+                sharedLink.CalendarId,
+                sharedLink.StartDate,
+                sharedLink.EndDate
+            );
+
+            // Убираем детали приватных событий
+            var sanitizedEvents = events.Select(e => new
+            {
+                e.Id,
+                e.Date,
+                e.Duration,
+                IsPrivate = e.IsPrivate,
+                Details = e.IsPrivate ? "This time is busy" : e.Details
+            });
+
+            // Возвращаем данные
+            return Ok(sanitizedEvents);
+        }
+
+    }
+*/
+
+        public class ShareRequest
+        {
+            public DateTime StartDate { get; set; } // Начало периода
+            public DateTime EndDate { get; set; } // Конец периода
+        }
+        //public class SharedLink
+        //{
+        //    public int Id { get; set; }
+        //    public int CalendarId { get; set; }
+        //    public string Code { get; set; } // Уникальный код ссылки
+        //    public DateTime StartDate { get; set; }
+        //    public DateTime EndDate { get; set; }
+        //    public DateTime CreatedAt { get; set; }
+        //}
+        //public interface ISharedLinkRepository
+        //{
+        //    void Add(SharedLink link);
+        //    SharedLink GetByCode(string code);
+        //}
     }
 }

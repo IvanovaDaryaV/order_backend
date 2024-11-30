@@ -1,8 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+
+using Microsoft.AspNetCore.Identity;
+
 namespace Order.Models
 {
-    public class User
+    public class User : IdentityUser<Guid>
     {
         public User()
         {

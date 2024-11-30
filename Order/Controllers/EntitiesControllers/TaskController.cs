@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Order.Models;
+using Order.Models.DTO;
 
 namespace Order.Controllers.EntitiesControllers
 {
@@ -8,10 +10,12 @@ namespace Order.Controllers.EntitiesControllers
     public class TaskController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public TaskController(ApplicationDbContext context)
+        public TaskController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Task/{id}
@@ -38,7 +42,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Task/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateTask(int id, [FromBody] Models.Task updatedTask)
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDto updatedTask)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -47,16 +51,7 @@ namespace Order.Controllers.EntitiesControllers
             if (task == null)
                 return NotFound();
 
-            task.Name = updatedTask.Name;
-            task.Description = updatedTask.Description;
-            task.Priority = updatedTask.Priority;
-            task.ContextId = updatedTask.ContextId;
-            task.HardDeadline = updatedTask.HardDeadline;
-            task.SoftDeadline = updatedTask.SoftDeadline;
-            task.UserId = updatedTask.UserId;
-            task.Status = updatedTask.Status;
-            task.User = updatedTask.User;
-            task.Context = updatedTask.Context;
+            _mapper.Map(updatedTask, task);
 
             _context.Tasks.Update(task);
             await _context.SaveChangesAsync();

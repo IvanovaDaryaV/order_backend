@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order.Models;
+using Order.Models.DTO;
 
 namespace Order.Controllers.EntitiesControllers
 {
@@ -9,10 +11,12 @@ namespace Order.Controllers.EntitiesControllers
     public class ProjectController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ProjectController(ApplicationDbContext context)
+        public ProjectController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Project/{id}
@@ -44,7 +48,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Project/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateProject(int id, [FromBody] Project updatedProject, [FromServices] TaskService taskService)
+        public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto updatedProject, [FromServices] TaskService taskService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -73,24 +77,16 @@ namespace Order.Controllers.EntitiesControllers
                     {
                         await taskService.AssignTasksToProject(id, updatedProject.TaskIds);
                     }
+
+                    // Обновление полей объекта маппингом
+                    _mapper.Map(updatedProject, project);
+
+                    // Сохраняем изменения
+                    _context.Projects.Update(project);
+                    await _context.SaveChangesAsync();
                 }
             }
 
-            // Обновляем остальные поля проекта
-            project.Description = updatedProject.Description;
-            project.HardDeadline = updatedProject.HardDeadline;
-            project.SoftDeadline = updatedProject.SoftDeadline;
-            project.Status = updatedProject.Status;
-            project.ContextId = updatedProject.ContextId;
-            project.Priority = updatedProject.Priority;
-            project.UserId = updatedProject.UserId;
-            project.User = updatedProject.User;
-            project.Context = updatedProject.Context;
-            project.TaskIds = updatedProject.TaskIds;
-
-            // Сохраняем изменения
-            _context.Projects.Update(project);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
 

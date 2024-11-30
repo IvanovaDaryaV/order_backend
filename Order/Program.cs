@@ -1,10 +1,34 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Order;
+using Order.Models;
+using System.Security.Cryptography;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Маппинг полей ===============================================
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// Авторизация =================================================
+builder.Services.AddIdentity<User, IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// Генерация ключа (256 бит)
+var key = new byte[32];
+using (var rng = RandomNumberGenerator.Create())
+{
+    rng.GetBytes(key);
+}
+var secretKey = new SymmetricSecurityKey(key);
+var base64Key = Convert.ToBase64String(key);
+// Сохранение ключа в конфигурацию
+builder.Configuration["JwtSettings:SecretKey"] = base64Key;
+Console.WriteLine(base64Key);
 
 builder.Services.AddScoped<TaskService>()
     .AddAuthentication(options =>
@@ -20,9 +44,10 @@ builder.Services.AddScoped<TaskService>()
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = "yourIssuer",
-            ValidAudience = "yourAudience",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("yourSecretKey"))
+            ValidIssuer = "OrderApp",
+            ValidAudience = "OrderAppUsers",
+            IssuerSigningKey = secretKey
+
         };
     });
 

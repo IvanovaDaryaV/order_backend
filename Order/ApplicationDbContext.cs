@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Order.Models;
 
 namespace Order
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Project> Projects { get; set; }
@@ -13,14 +15,22 @@ namespace Order
         public DbSet<Event> Events { get; set; }
         private readonly IConfiguration _configuration;
 
-        public ApplicationDbContext(IConfiguration configuration)
+        // Конструктор для Dependency Injection (используется в приложении)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration configuration)
+            : base(options)
         {
             _configuration = configuration;
         }
 
+        // Конструктор для EF Tools (например, миграций)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
+            if (!optionsBuilder.IsConfigured && _configuration != null)
             {
                 optionsBuilder.UseNpgsql(_configuration.GetConnectionString("DefaultConnection"));
             }
@@ -28,8 +38,8 @@ namespace Order
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-           /* base.OnModelCreating(modelBuilder);
-            modelBuilder.UseSnakeCaseNamingConvertation();*/
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Projects)
                 .WithOne(p => p.User)
@@ -45,6 +55,5 @@ namespace Order
                 .WithOne(t => t.User)
                 .OnDelete(DeleteBehavior.Cascade);
         }
-
     }
 }

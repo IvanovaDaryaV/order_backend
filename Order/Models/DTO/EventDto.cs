@@ -1,17 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using AutoMapper;
 
-namespace Order.Models
+namespace Order.Models.DTO
 {
-    public class Event
+    public class EventDto
     {
-        [Key]
-        [Required]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
-        [Required]
         public string Name { get; set; }
         [Required]
         public bool Status { get; set; }
@@ -24,9 +18,10 @@ namespace Order.Models
 
         [ForeignKey("UserId")]
         [JsonIgnore]
-        public User? User { get; set; } 
+        public User? User { get; set; }
         [ForeignKey("ContextId")]
-        public Context? Context { get; set; } 
+        public Context? Context { get; set; }
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
     }
+    
 }

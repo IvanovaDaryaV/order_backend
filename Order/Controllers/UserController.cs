@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Order;
+using Microsoft.IdentityModel.Tokens;
 using Order.Models;
-using System.Text.Json;
-using Microsoft.AspNetCore.Identity;
+using Order;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -11,6 +14,7 @@ public class UserController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly IPasswordHasher<User> _passwordHasher;
+
     public UserController(ApplicationDbContext context)
     {
         _context = context;
@@ -28,65 +32,57 @@ public class UserController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreateUser(string name, string email, string password)
     {
-        try
+        var newUser = new User
         {
-            var newUser = new User
-            {
-                Id = Guid.NewGuid(),
-                Name = name,
-                Email = email
-            };
+            Id = Guid.NewGuid(),
+            Name = name,
+            Email = email
+        };
 
-            // Хэширование пароля
-            newUser.PasswordHash = _passwordHasher.HashPassword(newUser, password);
+        newUser.PasswordHash = _passwordHasher.HashPassword(newUser, password);
 
-            _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
-    }
-
-    [HttpPatch("id/{userId}")]
-    public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] User updatedUser)
-    {
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null) return NotFound();
-
-        user.Name = updatedUser.Name;
-        user.Email = updatedUser.Email;
+        _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser);
     }
 
-    [HttpDelete("id/{userId}")]
-    public async Task<IActionResult> DeleteUser(Guid userId)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(string email, string password)
     {
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null) return NotFound();
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+            return Unauthorized("Invalid email or password");
 
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        if (passwordVerificationResult != PasswordVerificationResult.Success)
+            return Unauthorized("Invalid email or password");
 
-        return NoContent();
+        var token = GenerateJwtToken(user);
+
+        return Ok(new { Token = token });
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetUserByEmail(string email)
+    private string GenerateJwtToken(User user)
     {
-        var user = await _context.Users
-            .Include(u => u.Events)   
-            .Include(u => u.Projects)
-            .Include(u => u.Tasks)    
-            .FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null) return NotFound();
-        return Ok(user);
-    }
-    
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Name),
+            new Claim(ClaimTypes.Email, user.Email)
+        };
 
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSecretKey12345"));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: "OrderApp",
+            audience: "OrderAppUsers",
+            claims: claims,
+            expires: DateTime.Now.AddHours(1),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
 }
