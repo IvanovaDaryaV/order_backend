@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order;
@@ -10,6 +11,7 @@ namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class EventController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -22,6 +24,7 @@ namespace Order.Controllers.EntitiesControllers
         }
 
         // GET: api/Event/{id}
+        [Authorize]
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetEventById(int id)
         {
@@ -39,6 +42,7 @@ namespace Order.Controllers.EntitiesControllers
         }
 
         // POST: api/Event
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateEvent([FromBody] Event newEvent)
         {
@@ -51,6 +55,7 @@ namespace Order.Controllers.EntitiesControllers
         }
 
         // PUT: api/Event/{id}
+        [Authorize]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateEvent(int id, [FromBody] EventDto updatedEvent, [FromServices] TaskService taskService)
         {
@@ -95,6 +100,7 @@ namespace Order.Controllers.EntitiesControllers
         }
 
         // DELETE: api/Event/{id}
+        [Authorize]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteEvent(int id)
         {

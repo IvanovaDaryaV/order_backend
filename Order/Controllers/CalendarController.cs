@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order;
 using Order.Models;
@@ -8,6 +9,7 @@ using System.Text.Json;
 namespace Order.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class CalendarController : ControllerBase
     {
@@ -19,6 +21,7 @@ namespace Order.Controllers
         }
 
         [HttpGet("Weekly/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetWeeklyData(Guid userId, [FromQuery] string data)
         {
             if (_context == null)
@@ -83,6 +86,7 @@ namespace Order.Controllers
 
         // создание ссылки на календарь
         [HttpPost("Calendar/Share")]
+        [Authorize]
         public IActionResult ShareCalendar(int calendarId, [FromBody] ShareRequest request)
         {
             // Проверяем наличие календаря
