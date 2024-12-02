@@ -102,7 +102,8 @@ public class UserController : ControllerBase
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Email, user.Email)
         };
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_key")));
+        //var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_key")));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Алгоритм подписи
         
         var token = new JwtSecurityToken(
