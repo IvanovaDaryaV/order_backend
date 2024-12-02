@@ -1,6 +1,6 @@
-﻿namespace Order.Models.AuthModels
+﻿namespace Order.Models
 {
-    public class LoginModel
+    public class AuthModel
     {
         public string Name { get; set; }
         public string Email { get; set; }

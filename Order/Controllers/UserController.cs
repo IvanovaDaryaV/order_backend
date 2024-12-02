@@ -7,7 +7,6 @@ using Order;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Order.Models.AuthModels;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +36,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterUser([FromBody] RegisterModel model)
+    public async Task<IActionResult> RegisterUser([FromBody] AuthModel model)
     {
         var newUser = new User
         {
@@ -55,7 +54,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> LoginUser([FromBody] LoginModel model)
+    public async Task<IActionResult> LoginUser([FromBody] AuthModel model)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
         if (user == null)
