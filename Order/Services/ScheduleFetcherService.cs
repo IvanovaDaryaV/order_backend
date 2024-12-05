@@ -31,19 +31,17 @@ public class ScheduleFetcherService
         return personIdClaim?.Value;
     }
 
-    public async Task<string> FetchScheduleAsync(string token, string modeusPersonId, Guid userId, DateOnly startDate, DateOnly endDate)
+    public async Task<string> FetchScheduleAsync(string token, string modeusPersonId, Guid userId, DateTime startDate, DateTime endDate)
     {
         try
         {
             var requestBody = new
             {
                 size = 500,
-                timeMin = startDate.ToString("o"),  // ISO 8601
+                timeMin = startDate.ToString("o"), 
                 timeMax = endDate.ToString("o"),
                 //timeMin = "2024-12-01T00:00:00Z",
                 //timeMax = "2024-12-07T23:59:59Z",
-                //timeMin = startDate,
-                //timeMax = endDate,
                 attendeePersonId = new[] { modeusPersonId }
             };
             var jsonRequest = JsonConvert.SerializeObject(requestBody);
@@ -54,7 +52,7 @@ public class ScheduleFetcherService
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
-            // Выполняем POST-запрос
+            // POST-запрос
             var response = await _httpClient.PostAsync("https://utmn.modeus.org/schedule-calendar-v2/api/calendar/events/search?tz=Asia/Tyumen", content);
             response.EnsureSuccessStatusCode();
 
@@ -90,6 +88,7 @@ public class ScheduleFetcherService
     {
         public string name { get; set; }
         public string start { get; set; } 
+        public string end { get; set; } 
     }
 
     public class Embedded
@@ -109,14 +108,17 @@ public class ScheduleFetcherService
         {
             foreach (var ev in schedule._embedded.events)
             {
-                DateTime date = DateTime.Parse(ev.start);
-                string dateStr = date.ToString("yyyy-MM-dd");
+                DateTime dateStart = DateTime.Parse(ev.start);
+                DateTime dateEnd = DateTime.Parse(ev.end);
+                string dateStr1 = dateStart.ToString();
+                string dateStr2 = dateEnd.ToString();
 
-                Console.WriteLine($"Занятие: {ev.name}, Дата: {dateStr}");
+                Console.WriteLine($"Занятие: {ev.name}, Время начала: {dateStr1}, Время окончания: {dateStr2}");
 
                 Order.Models.Event evt = new Order.Models.Event();
                 evt.Name = ev.name;
-                evt.CalendarDate = DateOnly.Parse(dateStr);
+                evt.PeriodStart = DateTime.Parse(dateStr1);
+                evt.PeriodEnd = DateTime.Parse(dateStr2);
                 evt.UserId = userId;
                 evt.Status = false;
 

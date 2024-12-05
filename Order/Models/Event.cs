@@ -17,7 +17,10 @@ namespace Order.Models
         public bool Status { get; set; }
         public int? ContextId { get; set; }
         public int? Priority { get; set; }
-        public DateOnly? CalendarDate { get; set; }
+        [Column(TypeName = "timestamp without time zone")]
+        public DateTime? PeriodStart { get; set; }
+        [Column(TypeName = "timestamp without time zone")]
+        public DateTime? PeriodEnd { get; set; }
         public bool? IsPrivate { get; set; }
         [Required]
         public Guid UserId { get; set; }

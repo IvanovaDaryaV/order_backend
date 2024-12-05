@@ -16,7 +16,7 @@ public class ScheduleController : ControllerBase
     }
     
     [HttpGet("fetch")]
-    public async Task<IActionResult> FetchSchedule(string token, Guid userId, DateOnly startDate, DateOnly endDate)
+    public async Task<IActionResult> FetchSchedule(string token, Guid userId, DateTime startDate, DateTime endDate)
     {
         if (string.IsNullOrEmpty(token))
         {
