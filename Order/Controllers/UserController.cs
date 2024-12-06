@@ -34,7 +34,6 @@ public class UserController : ControllerBase
         if (user == null) return NotFound();
         return Ok(user);
     }
-
     [HttpPost("register")]
     public async Task<IActionResult> RegisterUser([FromBody] AuthModel model)
     {

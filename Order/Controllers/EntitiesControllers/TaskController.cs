@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Order.Models;
 using Order.Models.DTO;
 
@@ -22,7 +23,6 @@ namespace Order.Controllers.EntitiesControllers
 
         // GET: api/Task/{id}
         [HttpGet("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> GetTaskById(int id)
         {
             var task = await _context.Tasks.FindAsync(id);
@@ -31,9 +31,22 @@ namespace Order.Controllers.EntitiesControllers
             return Ok(task);
         }
 
+        [HttpGet("inbox/{userId:Guid}")]
+        public async Task<IActionResult> GetInboxTasks(Guid userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            var inboxTasks = await _context.Tasks
+                .Where(task => task.UserId == user.Id &&
+                task.ContextId == null && task.ProjectId == null && task.EventId == null && task.CallendarDate == null)
+                .ToListAsync();
+
+            return Ok(inboxTasks);
+        }
+
         // POST: api/Task
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> CreateTask([FromBody] Models.Task newTask)
         {
             if (!ModelState.IsValid)
@@ -46,7 +59,6 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Task/{id}
         [HttpPut("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDto updatedTask)
         {
             if (!ModelState.IsValid)
@@ -65,7 +77,6 @@ namespace Order.Controllers.EntitiesControllers
 
         // DELETE: api/Task/{id}
         [HttpDelete("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> DeleteTask(int id, [FromServices] TaskService taskService)
         {
             var task = await _context.Tasks.FindAsync(id);

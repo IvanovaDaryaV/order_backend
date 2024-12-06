@@ -21,7 +21,6 @@ namespace Order.Controllers
         }
 
         [HttpGet("Weekly/{userId}")]
-        [Authorize]
         public async Task<IActionResult> GetWeeklyData(Guid userId, [FromQuery] string data)
         {
             if (_context == null)

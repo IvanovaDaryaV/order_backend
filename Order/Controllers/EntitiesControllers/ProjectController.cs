@@ -23,7 +23,6 @@ namespace Order.Controllers.EntitiesControllers
 
         // GET: api/Project/{id}
         [HttpGet("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> GetProjectById(int id)
         {
             var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id);
@@ -40,7 +39,6 @@ namespace Order.Controllers.EntitiesControllers
 
         // POST: api/Project
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> CreateProject([FromBody] Project newProject)
         {
             if (!ModelState.IsValid)
@@ -52,7 +50,6 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Project/{id}
         [HttpPut("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto updatedProject, [FromServices] TaskService taskService)
         {
             if (!ModelState.IsValid)
@@ -98,7 +95,6 @@ namespace Order.Controllers.EntitiesControllers
 
         // DELETE: api/Project/{id}
         [HttpDelete("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> DeleteProject(int id)
         {
             var project = await _context.Projects.FindAsync(id);
