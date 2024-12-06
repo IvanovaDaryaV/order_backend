@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Order.Models;
 using Order.Services;
+using System;
 
 namespace Order.Controllers
 {
@@ -18,22 +19,26 @@ namespace Order.Controllers
             _context = context;
         }
 
-        //[HttpGet("check/{userId}/{periodStart}/{periodEnd}")]
-        //public async Task<IActionResult> CheckScheduleSharing(string publicLinkToken)
-        //{
-        //    bool isShared = await _scheduleSharingService.IsScheduleSharedWithPublicLinkAsync(publicLinkToken);
+        // Эндпоинт для проверки на то, что запрос был
+        [HttpGet("{token}")]
+        public async Task<IActionResult> ValidateShareLink(string token)
+        {
+            var sharedLink = await _context.ScheduleSharings
+                .Where(link => link.PublicLinkToken == token)
+                .FirstOrDefaultAsync();
 
-        //    if (!isShared)
-        //    {
-        //        return Unauthorized(new { message = "Schedule is not shared for this period" });
-        //    }
+            if (sharedLink == null)
+            {
+                return NotFound(new { message = "Link not found or expired." });
+            }
 
-        //    var tasks = await _scheduleSharingService.GetTasksForPeriodAsync(userId, periodStart, periodEnd);
-        //    var events = await _scheduleSharingService.GetEventsForPeriodAsync(userId, periodStart, periodEnd);
-
-        //    return Ok(new { tasks, events });
-        //}
-        
+            return Ok(new
+            {
+                sharedLink.UserId,
+                StartTime = sharedLink.PeriodStart,
+                EndTime = sharedLink.PeriodEnd
+            });
+        }
 
         [HttpPost("create-public-link")]
         public async Task<IActionResult> CreatePublicLink(Guid userId, DateTime periodStart, DateTime periodEnd)
@@ -45,19 +50,12 @@ namespace Order.Controllers
             return Ok(new { publicLink });
         }
 
-        [HttpGet("public/{publicLinkToken}")]
-        public async Task<IActionResult> GetScheduleByPublicLink(string publicLinkToken)
+        // Непосредственно получение данных
+        [HttpGet("public/{token}")]
+        public async Task<IActionResult> GetScheduleByPublicLink(string token)
         {
-            var isShared = await _scheduleSharingService.IsScheduleSharedWithPublicLinkAsync(publicLinkToken);
-
-            if (!isShared)
-            {
-                return Unauthorized(new { message = "Invalid or expired public link" });
-            }
-
-            // Получаем задачи и события для расписания, ассоциированного с публичной ссылкой
             var schedule = await _context.ScheduleSharings
-                .FirstOrDefaultAsync(s => s.PublicLinkToken == publicLinkToken);
+                .FirstOrDefaultAsync(s => s.PublicLinkToken == token);
 
             if (schedule == null)
             {
@@ -69,33 +67,5 @@ namespace Order.Controllers
 
             return Ok(new { tasks, events });
         }
-
-
-
-        //[HttpPost("calendar/share")]
-        //public IActionResult ShareCalendar(int calendarId, [FromBody] ShareRequest request)
-        //{
-        //    if (request.StartDate >= request.EndDate)
-        //    {
-        //        return BadRequest("StartDate must be earlier than EndDate.");
-        //    }
-
-        //    // генерация уникального кода ссылки
-        //    var uniqueCode = Guid.NewGuid().ToString("N");
-
-        //    // Сохраняем данные о ссылке в БД
-        //    //_sharedLinkRepository.Add(new SharedLink
-        //    //{
-        //    //    CalendarId = calendarId,
-        //    //    Code = uniqueCode,
-        //    //    StartDate = request.StartDate,
-        //    //    EndDate = request.EndDate,
-        //    //    CreatedAt = DateTime.UtcNow
-        //    //});
-
-        //    // Возвращаем ссылку
-        //    return Ok(new { ShareLink = $"https://myapp.com/calendar/shared/{uniqueCode}" });
-        //}
-
     }
 }

@@ -1,8 +1,14 @@
-﻿namespace Order.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Order.Models
 {
     public class ScheduleSharing
     {
-        public int Id { get; set; }
+        [Key]
+        [Required]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ShareId { get; set; }
         public Guid UserId { get; set; }
         public DateTime PeriodStart { get; set; } 
         public DateTime PeriodEnd { get; set; }

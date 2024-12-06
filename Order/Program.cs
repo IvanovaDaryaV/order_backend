@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Order;
 using Order.Models;
+using Order.Services;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -30,6 +31,8 @@ builder.Configuration.AddEnvironmentVariables();
 //{
 //    Console.WriteLine($"JWT_key found: {jwtKey}");
 //}
+
+builder.Services.AddScoped<ScheduleSharingService>();
 
 builder.Services.AddScoped<TaskService>()
     .AddAuthentication(options =>
