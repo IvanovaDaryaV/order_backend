@@ -29,21 +29,16 @@ namespace Order.Controllers
 
             if (sharedLink == null)
             {
-                return NotFound(new { message = "Link not found or expired." });
+                throw new Exception("Link not found.");
             }
 
-            return Ok(new
-            {
-                sharedLink.UserId,
-                StartTime = sharedLink.PeriodStart,
-                EndTime = sharedLink.PeriodEnd
-            });
+            return Ok();
         }
 
         [HttpPost("create-public-link")]
-        public async Task<IActionResult> CreatePublicLink(Guid userId, DateTime periodStart, DateTime periodEnd)
+        public async Task<IActionResult> CreatePublicLink(Guid userId, DateTime periodStart, DateTime periodEnd, int[] privateEventsId)
         {
-            var publicLinkToken = await _scheduleSharingService.CreatePublicLinkAsync(userId, periodStart, periodEnd);
+            var publicLinkToken = await _scheduleSharingService.CreatePublicLinkAsync(userId, periodStart, periodEnd, privateEventsId);
 
             var publicLink = $"{Request.Scheme}://{Request.Host}/api/schedule/public/{publicLinkToken}";
 
@@ -65,7 +60,7 @@ namespace Order.Controllers
             var tasks = await _scheduleSharingService.GetTasksForPeriodAsync(schedule.UserId, schedule.PeriodStart, schedule.PeriodEnd);
             var events = await _scheduleSharingService.GetEventsForPeriodAsync(schedule.UserId, schedule.PeriodStart, schedule.PeriodEnd);
 
-            return Ok(new { tasks, events });
+            return Ok(new { tasks, events, schedule.privateEventsId });
         }
     }
 }

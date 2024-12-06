@@ -13,5 +13,6 @@ namespace Order.Models
         public DateTime PeriodStart { get; set; } 
         public DateTime PeriodEnd { get; set; }
         public string PublicLinkToken { get; set; } // Токен публичной ссылки
+        public int[] privateEventsId {  get; set; }
     }
 }

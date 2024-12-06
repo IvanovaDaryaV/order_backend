@@ -12,9 +12,8 @@ namespace Order.Services
             _context = context;
         }
 
-        public async Task<string> CreatePublicLinkAsync(Guid userId, DateTime periodStart, DateTime periodEnd)
+        public async Task<string> CreatePublicLinkAsync(Guid userId, DateTime periodStart, DateTime periodEnd, int[] privateEventsId)
         {
-            // Генерация уникального токена
             var publicLinkToken = Guid.NewGuid().ToString();
 
             var schedule = new ScheduleSharing
@@ -22,7 +21,8 @@ namespace Order.Services
                 UserId = userId,
                 PeriodStart = periodStart,
                 PeriodEnd = periodEnd,
-                PublicLinkToken = publicLinkToken
+                PublicLinkToken = publicLinkToken,
+                privateEventsId = privateEventsId
             };
 
             _context.ScheduleSharings.Add(schedule);
