@@ -32,6 +32,12 @@ builder.Configuration.AddEnvironmentVariables();
 //    Console.WriteLine($"JWT_key found: {jwtKey}");
 //}
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(80); // HTTP
+    serverOptions.ListenAnyIP(443, listenOptions => listenOptions.UseHttps()); // HTTPS
+});
+
 builder.Services.AddScoped<ScheduleSharingService>();
 
 builder.Services.AddScoped<TaskService>()

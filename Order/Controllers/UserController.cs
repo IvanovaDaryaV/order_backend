@@ -108,7 +108,7 @@ public class UserController : ControllerBase
             issuer: _configuration["JwtSettings:Issuer"],
             audience: _configuration["JwtSettings:Audience"],
             claims: claims,
-            expires: DateTime.Now.AddHours(1),
+            expires: DateTime.Now.AddDays(1),
             signingCredentials: creds
         );
 
