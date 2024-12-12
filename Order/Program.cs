@@ -37,6 +37,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     serverOptions.ListenAnyIP(80); // HTTP
     serverOptions.ListenAnyIP(443, listenOptions => listenOptions.UseHttps()); // HTTPS
 });
+//builder.WebHost.UseUrls("http://localhost:5141");
 
 builder.Services.AddScoped<ScheduleSharingService>();
 

@@ -71,7 +71,7 @@ namespace Order.Controllers
 
             var contextIds = filteredTasks
                 .Select(t => (int?)t.ContextId)
-                .Concat(filteredEvents.Select(e => e.ContextId))
+                //.Concat(filteredEvents.Select(e => e.ContextId))
                 .Distinct()
                 .ToList();
 

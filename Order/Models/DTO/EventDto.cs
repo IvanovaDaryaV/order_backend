@@ -15,12 +15,15 @@ namespace Order.Models.DTO
         public bool? IsPrivate { get; set; }
         [Required]
         public Guid UserId { get; set; }
+        public int? ProjectId { get; set; }
 
         [ForeignKey("UserId")]
         [JsonIgnore]
         public User? User { get; set; }
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
+        [ForeignKey("ProjectId")]
+        public Project? Project { get; set; }
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
     }
     

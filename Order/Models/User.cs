@@ -12,6 +12,7 @@ namespace Order.Models
             Events = new List<Event>();
             Tasks = new List<Task>();
             Projects = new List<Project>();
+            Contexts = new List<Context>();
         }
 
         [Key]
@@ -27,6 +28,7 @@ namespace Order.Models
         public ICollection<Task>? Tasks { get; set; } = new List<Task>(); 
         public ICollection<Project>? Projects { get; set; } = new List<Project>(); 
         public ICollection<Event>? Events { get; set; } = new List<Event>();
+        public ICollection<Context>? Contexts { get; set; } = new List<Context>();
 
     }
 }

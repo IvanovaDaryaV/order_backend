@@ -92,6 +92,14 @@ namespace Order.Controllers.EntitiesControllers
 
             }
 
+            else
+            {
+                // Обновление полей объекта маппингом
+                _mapper.Map(updatedEvent, evt);
+
+                _context.Events.Update(evt);
+                await _context.SaveChangesAsync();
+            }
            
             return NoContent();
         }
