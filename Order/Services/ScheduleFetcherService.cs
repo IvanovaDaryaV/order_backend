@@ -40,8 +40,8 @@ public class ScheduleFetcherService
                 size = 500,
                 timeMin = startDate.ToString("o"), 
                 timeMax = endDate.ToString("o"),
-                //timeMin = "2024-12-01T00:00:00Z",
-                //timeMax = "2024-12-07T23:59:59Z",
+                //timeMin = "2024-12-01T00:00:00",
+                //timeMax = "2024-12-07T23:59:59",
                 attendeePersonId = new[] { modeusPersonId }
             };
             var jsonRequest = JsonConvert.SerializeObject(requestBody);

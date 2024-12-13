@@ -11,7 +11,7 @@ namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    //[Authorize]
     public class EventController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -83,16 +83,15 @@ namespace Order.Controllers.EntitiesControllers
                         await taskService.AssignTasksToEvent(id, updatedEvent.TaskIds);
                     }
 
-                    // Обновление полей объекта маппингом
-                    _mapper.Map(updatedEvent, evt);
-
-                    _context.Events.Update(evt);
-                    await _context.SaveChangesAsync();
                 }
 
             }
+            // Обновление полей объекта маппингом
+            _mapper.Map(updatedEvent, evt);
 
-           
+            _context.Events.Update(evt);
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
 

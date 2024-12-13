@@ -17,6 +17,7 @@ namespace Order.Models
         public DateOnly? SoftDeadline { get; set; }
         [Required]
         public bool Status { get; set; }
+        [JsonIgnore]
         public int? ContextId { get; set; }
         public int? Priority { get; set; }
         [Required]

@@ -55,6 +55,11 @@ namespace Order
                 .HasMany(u => u.Tasks)
                 .WithOne(t => t.User)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Contexts)
+                .WithOne(c => c.User)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

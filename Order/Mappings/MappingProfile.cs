@@ -12,6 +12,7 @@ namespace Order.Mappings
             CreateMap<EventDto, Event>();
             CreateMap<ProjectDto, Project>();
             CreateMap<TaskDto, Models.Task>();
+            CreateMap<ContextDto, Context>();
         }
     }
 }

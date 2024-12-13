@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace Order.Models
+namespace Order.Models.DTO
 {
-    public class Context
+    public class ContextDto
     {
         [Key]
         [Required]

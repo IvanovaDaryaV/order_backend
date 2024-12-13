@@ -13,8 +13,8 @@ using Order;
 namespace Order.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241205180349_EditSharingIdentity")]
-    partial class EditSharingIdentity
+    [Migration("20241213121357_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -172,7 +172,12 @@ namespace Order.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Contexts");
                 });
@@ -204,6 +209,9 @@ namespace Order.Migrations
                     b.Property<int?>("Priority")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Status")
                         .HasColumnType("boolean");
 
@@ -216,6 +224,8 @@ namespace Order.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContextId");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("UserId");
 
@@ -265,11 +275,11 @@ namespace Order.Migrations
 
             modelBuilder.Entity("Order.Models.ScheduleSharing", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ShareId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ShareId"));
 
                     b.Property<DateTime>("PeriodEnd")
                         .HasColumnType("timestamp with time zone");
@@ -284,7 +294,11 @@ namespace Order.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.Property<int[]>("privateEventsId")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("ShareId");
 
                     b.ToTable("ScheduleSharings");
                 });
@@ -466,11 +480,25 @@ namespace Order.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Order.Models.Context", b =>
+                {
+                    b.HasOne("Order.Models.User", "User")
+                        .WithMany("Contexts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Order.Models.Event", b =>
                 {
-                    b.HasOne("Order.Models.Context", "Context")
+                    b.HasOne("Order.Models.Context", null)
                         .WithMany("Events")
                         .HasForeignKey("ContextId");
+
+                    b.HasOne("Order.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId");
 
                     b.HasOne("Order.Models.User", "User")
                         .WithMany("Events")
@@ -478,7 +506,7 @@ namespace Order.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Context");
+                    b.Navigation("Project");
 
                     b.Navigation("User");
                 });
@@ -534,6 +562,8 @@ namespace Order.Migrations
 
             modelBuilder.Entity("Order.Models.User", b =>
                 {
+                    b.Navigation("Contexts");
+
                     b.Navigation("Events");
 
                     b.Navigation("Projects");

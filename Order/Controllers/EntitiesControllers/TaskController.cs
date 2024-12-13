@@ -8,7 +8,7 @@ using Order.Models.DTO;
 namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     public class TaskController : Controller
     {

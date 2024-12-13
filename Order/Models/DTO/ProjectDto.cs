@@ -21,5 +21,6 @@ namespace Order.Models.DTO
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
+        public ICollection<Event>? Events { get; set; } = new List<Event>();
     }
 }

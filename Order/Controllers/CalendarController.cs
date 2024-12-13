@@ -1,23 +1,29 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order;
 using Order.Models;
+using Order.Models.DTO;
+using System.Linq;
+
 //using Order.Services;
 using System.Text.Json;
 
 namespace Order.Controllers
 {
     [ApiController]
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     public class CalendarController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public CalendarController(ApplicationDbContext context)
+        public CalendarController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         [HttpGet("Weekly/{userId}")]
@@ -48,7 +54,7 @@ namespace Order.Controllers
             if (startDateTime > endDateTime)
                 return BadRequest("Start date cannot be later than end date.");
 
-            // Получение данных пользователя
+            // Получение данных пользователя ==========================================
             var user = await _context.Users
                 .Include(u => u.Tasks)
                 .Include(u => u.Events)
@@ -70,23 +76,40 @@ namespace Order.Controllers
                 return StatusCode(500, "Tasks or Events are null even after loading.");
 
             var contextIds = filteredTasks
-                .Select(t => (int?)t.ContextId)
-                .Concat(filteredEvents.Select(e => e.ContextId))
+                .Where(task => task.ContextId != null)
+                .Select(task => task.ContextId)
                 .Distinct()
                 .ToList();
 
+            //var contexts = await _context.Contexts
+            //    //.Where(c => contextIds.Contains(c.Id))
+            //    //.Select(c => c.Name)
+            //    .Distinct()
+            //    .ToListAsync();
+
             var contexts = await _context.Contexts
-                //.Where(c => contextIds.Contains(c.Id))
-                //.Select(c => c.Name)
-                .Distinct()
+                .Where(c => contextIds.Contains(c.Id))
                 .ToListAsync();
+
+            // Маппируем контексты на ContextDto
+            //var contextDtos = _mapper.Map<List<ContextDto>>(contexts);
+            var contextDtos = _context.Contexts
+                .Where(c => contextIds.Contains(c.Id))
+                .Select(c => new ContextDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Place = c.Place,
+                    UserId = c.UserId
+                })
+                .ToList();
 
             return Ok(new
             {
                 user.Id,
                 Tasks = filteredTasks,
                 Events = filteredEvents,
-                Contexts = contexts
+                Contexts = contextDtos
             });
         }
 

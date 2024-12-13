@@ -169,7 +169,12 @@ namespace Order.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Contexts");
                 });
@@ -182,8 +187,6 @@ namespace Order.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ContextId")
-                        .HasColumnType("integer");
 
                     b.Property<bool?>("IsPrivate")
                         .HasColumnType("boolean");
@@ -201,6 +204,9 @@ namespace Order.Migrations
                     b.Property<int?>("Priority")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Status")
                         .HasColumnType("boolean");
 
@@ -212,7 +218,7 @@ namespace Order.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContextId");
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("UserId");
 
@@ -282,10 +288,6 @@ namespace Order.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<int[]>("privateEventsId")
-                        .IsRequired()
-                        .HasColumnType("integer[]");
-
-                    b.Property<int[]>("privateTasksId")
                         .IsRequired()
                         .HasColumnType("integer[]");
 
@@ -471,11 +473,22 @@ namespace Order.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Order.Models.Context", b =>
+                {
+                    b.HasOne("Order.Models.User", "User")
+                        .WithMany("Contexts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Order.Models.Event", b =>
                 {
-                    b.HasOne("Order.Models.Context", "Context")
-                        .WithMany("Events")
-                        .HasForeignKey("ContextId");
+
+                    b.HasOne("Order.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId");
 
                     b.HasOne("Order.Models.User", "User")
                         .WithMany("Events")
@@ -483,7 +496,7 @@ namespace Order.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Context");
+                    b.Navigation("Project");
 
                     b.Navigation("User");
                 });
@@ -539,6 +552,8 @@ namespace Order.Migrations
 
             modelBuilder.Entity("Order.Models.User", b =>
                 {
+                    b.Navigation("Contexts");
+
                     b.Navigation("Events");
 
                     b.Navigation("Projects");

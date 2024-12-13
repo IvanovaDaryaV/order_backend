@@ -27,7 +27,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("id/{userId}")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> GetUserById(Guid userId)
     {
         var user = await _context.Users.FindAsync(userId);
@@ -73,7 +73,7 @@ public class UserController : ControllerBase
 
     // DELETE: api/User/{id}
     [HttpDelete("{id:Guid}")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> DeleteUser(Guid id)
     {
         var user = await _context.Users.FindAsync(id);
