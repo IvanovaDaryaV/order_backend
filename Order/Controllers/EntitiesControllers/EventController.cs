@@ -6,6 +6,7 @@ using Order;
 using Order.Models;
 using Order.Models.DTO;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Order.Controllers.EntitiesControllers
 {
@@ -62,6 +63,13 @@ namespace Order.Controllers.EntitiesControllers
             var evt = await _context.Events.FindAsync(id);
             if (evt == null)
                 return NotFound();
+
+            // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже указано
+
+            if (updatedEvent.UserId == null)
+            {
+                updatedEvent.UserId = evt.UserId;
+            }
 
             // Если переданы новые задачи, привязываем их
             if (updatedEvent.TaskIds != null && updatedEvent.TaskIds.Any())

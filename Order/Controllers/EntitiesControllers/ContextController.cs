@@ -6,6 +6,7 @@ using Order;
 using Order.Models;
 using Order.Models.DTO;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Order.Controllers.EntitiesControllers
 {
@@ -56,6 +57,13 @@ namespace Order.Controllers.EntitiesControllers
             var context = await _context.Contexts.FindAsync(id);
             if (context == null)
                 return NotFound();
+
+            // Чтобы не нарушать связь, если userId не изменяется, просто берем прошлое значение
+
+            if (updatedContext.UserId == null)
+            {
+                updatedContext.UserId = context.UserId;
+            }
 
             _mapper.Map(updatedContext, context);
 

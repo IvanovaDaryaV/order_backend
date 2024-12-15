@@ -68,6 +68,15 @@ namespace Order.Controllers.EntitiesControllers
             if (task == null)
                 return NotFound();
 
+            // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение,
+            // которое сейчас в задаче
+
+            if (updatedTask.UserId == null)
+            {
+                updatedTask.UserId = task.UserId;
+            }
+
+
             _mapper.Map(updatedTask, task);
 
             _context.Tasks.Update(task);

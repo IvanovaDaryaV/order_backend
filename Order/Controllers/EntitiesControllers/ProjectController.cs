@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order.Models;
 using Order.Models.DTO;
+using System.Threading.Tasks;
 
 namespace Order.Controllers.EntitiesControllers
 {
@@ -59,37 +60,54 @@ namespace Order.Controllers.EntitiesControllers
             if (project == null)
                 return NotFound();
 
+            else
+            {
+                // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 
-            // Если переданы новые задачи, привязываем их
-            if (updatedProject.TaskIds != null && updatedProject.TaskIds.Any())
-            { 
-                var tasksToUpdate = await _context.Tasks
-                    .Where(t => updatedProject.TaskIds.Contains(t.Id))
-                    .ToListAsync();
-
-                // Если количество найденных задач не совпадает с количеством переданных id
-                if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
+                if (updatedProject.UserId == null)
                 {
-                    return BadRequest("Некоторые из переданных задач не найдены. Изменения не были применены.");
+                    updatedProject.UserId = project.UserId;
                 }
+                Console.WriteLine("Текущий проект: ", project?.ToString());
+
+                if (updatedProject.TaskIds == null)
+                {
+                    updatedProject.TaskIds = project.TaskIds;
+
+                }
+                // Если переданы новые задачи, привязываем их
                 else
                 {
-                    await taskService.UnassignTasksFromProject(id);
-                    foreach (var task in tasksToUpdate)
+                    var tasksToUpdate = await _context.Tasks
+                        .Where(t => updatedProject.TaskIds.Contains(t.Id))
+                        .ToListAsync();
+
+                    // Если количество найденных задач не совпадает с количеством переданных id
+                    if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
                     {
-                        await taskService.AssignTasksToProject(id, updatedProject.TaskIds);
+                        return BadRequest("Некоторые из переданных задач не найдены. Изменения не были применены.");
                     }
+                    else
+                    {
+                        await taskService.UnassignTasksFromProject(id);
+                        foreach (var task in tasksToUpdate)
+                        {
+                            await taskService.AssignTasksToProject(id, updatedProject.TaskIds);
+                        }
 
-                    // Обновление полей объекта маппингом
-                    _mapper.Map(updatedProject, project);
-
-                    // Сохраняем изменения
-                    _context.Projects.Update(project);
-                    await _context.SaveChangesAsync();
+                    }
                 }
+
+                // Обновление полей объекта маппингом
+                _mapper.Map(updatedProject, project);
+
+                // Сохраняем изменения
+                _context.Projects.Update(project);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
 
-            return NoContent();
         }
 
 

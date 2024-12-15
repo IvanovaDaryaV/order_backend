@@ -6,18 +6,15 @@ namespace Order.Models.DTO
 {
     public class TaskDto
     {
-        [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public string? Description { get; set; }
         public DateOnly? HardDeadline { get; set; }
         public DateOnly? SoftDeadline { get; set; }
-        [Required]
-        public bool Status { get; set; }
+        public bool? Status { get; set; }
         public int? ContextId { get; set; }
         public int? Priority { get; set; }
-        [Required]
         [Column(TypeName = "uuid")]
-        public Guid UserId { get; set; }
+        public Guid? UserId { get; set; }
         public int? EventId { get; set; }
         public DateOnly? CallendarDate { get; set; }
         public bool? IsPrivate { get; set; }

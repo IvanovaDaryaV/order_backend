@@ -6,9 +6,8 @@ namespace Order.Models.DTO
 {
     public class EventDto
     {
-        public string Name { get; set; }
-        [Required]
-        public bool Status { get; set; }
+        public string? Name { get; set; }
+        public bool? Status { get; set; }
         public int? Priority { get; set; }
         [Column(TypeName = "timestamp without time zone")]
         public DateTime? PeriodStart { get; set; }
@@ -18,8 +17,7 @@ namespace Order.Models.DTO
         public int? ProjectId { get; set; }
         [ForeignKey("ProjectId")]
         public Project? Project { get; set; }
-        [Required]
-        public Guid UserId { get; set; }
+        public Guid? UserId { get; set; }
 
         [ForeignKey("UserId")]
         [JsonIgnore]

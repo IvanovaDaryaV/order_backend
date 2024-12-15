@@ -97,7 +97,7 @@ namespace Order.Controllers
                 .Where(c => contextIds.Contains(c.Id))
                 .Select(c => new ContextDto
                 {
-                    Id = c.Id,
+                    //Id = c.Id,
                     Name = c.Name,
                     Place = c.Place,
                     UserId = c.UserId
