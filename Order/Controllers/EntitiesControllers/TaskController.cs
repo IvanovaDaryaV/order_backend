@@ -39,7 +39,7 @@ namespace Order.Controllers.EntitiesControllers
 
             var inboxTasks = await _context.Tasks
                 .Where(task => task.UserId == user.Id &&
-                task.ContextId == null && task.ProjectId == null && task.EventId == null && task.CallendarDate == null)
+                task.ContextId == null && task.ProjectId == null && task.EventId == null && task.CalendarDate == null)
                 .ToListAsync();
 
             return Ok(inboxTasks);

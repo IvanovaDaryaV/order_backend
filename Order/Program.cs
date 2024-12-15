@@ -65,7 +65,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(connectionString, 
+        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
 });
 
 builder.Services.AddCors(options =>

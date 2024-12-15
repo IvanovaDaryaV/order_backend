@@ -39,6 +39,7 @@ namespace Order.Controllers
             if (dateRange == null || dateRange.Length != 2)
                 return BadRequest("Invalid date range format.");
 
+            #region получение значений дат из строки
             if (!DateTime.TryParse(dateRange[0], out var startDateTime) ||
                 !DateTime.TryParse(dateRange[1], out var endDateTime))
             {
@@ -53,6 +54,7 @@ namespace Order.Controllers
 
             if (startDateTime > endDateTime)
                 return BadRequest("Start date cannot be later than end date.");
+            #endregion
 
             // Получение данных пользователя ==========================================
             var user = await _context.Users
@@ -64,7 +66,10 @@ namespace Order.Controllers
                 return NotFound($"User with ID {userId} not found.");
 
             var filteredTasks = user.Tasks?
-                                    .Where(task => task.HardDeadline >= startDate && task.HardDeadline <= endDate)
+                                    .Where(task => (
+                                    (task.HardDeadline.HasValue && task.HardDeadline >= startDate && task.HardDeadline <= endDate) ||
+                                    (task.CalendarDate.HasValue && task.CalendarDate >= startDate && task.CalendarDate <= endDate)
+                                    ))
                                     .ToList();
 
             var filteredEvents = user.Events?

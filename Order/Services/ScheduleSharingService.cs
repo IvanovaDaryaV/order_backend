@@ -43,7 +43,7 @@ namespace Order.Services
         {
             // Логика для получения задач в определенный период
             return await _context.Tasks
-                .Where(t => t.UserId == userId && t.CallendarDate >= DateOnly.FromDateTime(periodStart) && t.CallendarDate <= DateOnly.FromDateTime(periodEnd))
+                .Where(t => t.UserId == userId && t.CalendarDate >= DateOnly.FromDateTime(periodStart) && t.CalendarDate <= DateOnly.FromDateTime(periodEnd))
                 .ToListAsync();
             
         }

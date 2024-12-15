@@ -24,7 +24,7 @@ namespace Order.Models
         [Column(TypeName = "uuid")]
         public Guid UserId { get; set; }
         public int? EventId { get; set; }
-        public DateOnly? CallendarDate { get; set; }
+        public DateOnly? CalendarDate { get; set; }
         public bool? IsPrivate { get; set; }
         public int? ProjectId { get; set; }
 
