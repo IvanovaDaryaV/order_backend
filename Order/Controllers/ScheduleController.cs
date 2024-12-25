@@ -41,8 +41,6 @@ public class ScheduleController : ControllerBase
         var calendar = Calendar.Load(fileContent);
         var events = new List<Event>();
 
-
-        // СЕЙЧАС У ВСЕХ СОБЫТИЙ ПРОСТАВЛЯЕТСЯ СТАТУС FASLE!!!
         foreach (var component in calendar.Events)
         {
             string inputName = component.Summary;
