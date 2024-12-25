@@ -49,7 +49,7 @@ __________________________________
 
 # Загрузка из фала .ics
 
-Эндпоинт api/ScheduleController/upload-ics
+Эндпоинт api/Schedule/upload-ics
 
 - userId
 - загрузить файл
