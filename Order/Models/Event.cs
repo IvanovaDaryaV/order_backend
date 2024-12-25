@@ -29,7 +29,8 @@ namespace Order.Models
 
         [ForeignKey("UserId")]
         [JsonIgnore]
-        public User? User { get; set; } 
+        public User? User { get; set; }
+        public string? Type { get; set; } // Тип события - личное или modeus
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
     }
 }

@@ -2,6 +2,11 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Order.Models;
+using Order.Models.DTO;
+using Ical.Net;
+using Order;
 
 
 [ApiController]
@@ -9,12 +14,63 @@ using System.Threading.Tasks;
 public class ScheduleController : ControllerBase
 {
     private readonly ScheduleFetcherService _modeusService;
+    private readonly ApplicationDbContext _context;
 
-    public ScheduleController(ScheduleFetcherService modeusService)
+    public ScheduleController(ScheduleFetcherService modeusService, ApplicationDbContext context)
     {
         _modeusService = modeusService;
+        _context = context;
     }
-    
+
+    [HttpPost("upload-ics")]
+    public async Task<IActionResult> UploadICS(IFormFile file, Guid userId)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file uploaded.");
+        }
+
+        string fileContent;
+
+        using (var stream = file.OpenReadStream())
+        using (var reader = new StreamReader(stream))
+        {
+            fileContent = reader.ReadToEnd();
+        }
+
+        var calendar = Calendar.Load(fileContent);
+        var events = new List<Event>();
+
+
+        // СЕЙЧАС У ВСЕХ СОБЫТИЙ ПРОСТАВЛЯЕТСЯ СТАТУС FASLE!!!
+        foreach (var component in calendar.Events)
+        {
+            string inputName = component.Summary;
+            string[] parts = inputName.Split(" / ");
+            string resultName = "";
+            if (parts.Length >= 2)
+            {
+                resultName = $"{parts[0]} ({parts[1]})";
+            }
+
+            Event evt = new Event();
+            evt.Name = resultName;
+            evt.PeriodStart = component.DtStart.AsDateTimeOffset.DateTime;
+            evt.PeriodEnd = component.DtEnd.AsDateTimeOffset.DateTime;
+            evt.UserId = userId;
+            evt.Type = "modeus";
+
+            if (evt.PeriodEnd > DateTime.Today) evt.Status = false;
+            else evt.Status = true;
+
+            _context.Events.Add(evt);
+        }
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
+
     [HttpGet("fetch")]
     public async Task<IActionResult> FetchSchedule(string token, Guid userId, DateTime startDate, DateTime endDate)
     {
