@@ -34,4 +34,11 @@ public class ScheduleController : ControllerBase
 
         return Ok(schedule); // Возвращаем JSON с расписанием
     }
+
+    //[HttpGet("auth-modeus")]
+    //public async Task<IActionResult> AuthModeus(string email, string password)
+    //{
+    //    var token = await _modeusService.AuthenticateAsync(email, password);
+    //    return Ok(token); 
+    //}
 }

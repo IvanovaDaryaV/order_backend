@@ -30,6 +30,51 @@ public class ScheduleFetcherService
 
         return personIdClaim?.Value;
     }
+    // войти в модеус
+    //public async Task<string> AuthenticateAsync(string username, string password)
+    //{
+    //    try
+    //    {
+    //        // Тело запроса
+    //        var requestBody = new
+    //        {
+    //            grant_type = "password",    // тип авторизации
+    //            client_id = "your_client_id", // Замените на реальный client_id
+    //            client_secret = "your_client_secret", // Замените на реальный client_secret
+    //            username = username,
+    //            password = password
+    //        };
+
+    //        var jsonRequest = JsonConvert.SerializeObject(requestBody);
+    //        var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+    //        // Заголовки
+    //        _httpClient.DefaultRequestHeaders.Clear();
+    //        _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+
+    //        // POST-запрос для получения токена
+    //        var response = await _httpClient.PostAsync("https://auth.modeus.org/oauth2/authorize", content);
+
+    //        if (!response.IsSuccessStatusCode)
+    //        {
+    //            Console.WriteLine($"Error during authentication: {response.StatusCode}");
+    //            return string.Empty;
+    //        }
+
+    //        var responseData = await response.Content.ReadAsStringAsync();
+    //        var responseJson = JsonConvert.DeserializeObject<dynamic>(responseData);
+
+    //        Console.WriteLine(responseJson);
+
+    //        // Предположим, что токен хранится в поле "access_token"
+    //        return responseJson?.access_token ?? string.Empty;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Console.WriteLine($"Error during authentication: {ex}");
+    //        return string.Empty;
+    //    }
+    //}
 
     public async Task<string> FetchScheduleAsync(string token, string modeusPersonId, Guid userId, DateTime startDate, DateTime endDate)
     {
@@ -38,7 +83,7 @@ public class ScheduleFetcherService
             var requestBody = new
             {
                 size = 500,
-                timeMin = startDate.ToString("o"), 
+                timeMin = startDate.ToString("o"),
                 timeMax = endDate.ToString("o"),
                 //timeMin = "2024-12-01T00:00:00",
                 //timeMax = "2024-12-07T23:59:59",
@@ -62,8 +107,8 @@ public class ScheduleFetcherService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching schedule data: {ex}");
-            return string.Empty; 
+            Console.WriteLine($"Error fetching schedule data: {ex.Message}");
+            return string.Empty;
         }
     }
     public class HoldingStatus

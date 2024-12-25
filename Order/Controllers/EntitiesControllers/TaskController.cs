@@ -47,10 +47,14 @@ namespace Order.Controllers.EntitiesControllers
 
         // POST: api/Task
         [HttpPost]
-        public async Task<IActionResult> CreateTask([FromBody] Models.Task newTask)
+        public async Task<IActionResult> CreateTask([FromBody] Models.Task newTask, [FromServices] TaskService taskService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // если при создании задачи указано, что она относится к какому-то определенному проекту
+            //if (newTask.ProjectId != null)
+            //    await taskService.AssignTasksToProject((int)newTask.ProjectId, new List<int> (newTask.Id));
 
             _context.Tasks.Add(newTask);
             await _context.SaveChangesAsync();

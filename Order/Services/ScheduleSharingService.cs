@@ -12,7 +12,7 @@ namespace Order.Services
             _context = context;
         }
 
-        public async Task<string> CreatePublicLinkAsync(Guid userId, DateTime periodStart, DateTime periodEnd, int[] privateEventsId)
+        public async Task<string> CreatePublicLinkAsync(Guid userId, DateTime periodStart, DateTime periodEnd, int[]? privateEventsId)
         {
             var publicLinkToken = Guid.NewGuid().ToString();
 

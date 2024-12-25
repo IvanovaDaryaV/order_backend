@@ -27,6 +27,7 @@ namespace Order.Models
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
+        public List<string>? Links { get; set; } // Список ссылок (на материалы и тд)
         public ICollection<Event>? Events { get; set; } = new List<Event>();
     }
 }

@@ -58,8 +58,10 @@ namespace Order.Controllers.EntitiesControllers
 
             var project = await _context.Projects.FindAsync(id);
             if (project == null)
+            {
                 return NotFound();
-
+            }
+               
             else
             {
                 // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
@@ -68,35 +70,40 @@ namespace Order.Controllers.EntitiesControllers
                 {
                     updatedProject.UserId = project.UserId;
                 }
-                Console.WriteLine("Текущий проект: ", project?.ToString());
 
                 if (updatedProject.TaskIds == null)
                 {
+                    //Console.WriteLine("Взяли старые задачи: ", project.TaskIds);
+                    Console.WriteLine("TaskIds проекта: " + (project.TaskIds != null ? string.Join(", ", project.TaskIds) : "Нет задач"));
                     updatedProject.TaskIds = project.TaskIds;
-
                 }
-                // Если переданы новые задачи, привязываем их
-                else
-                {
-                    var tasksToUpdate = await _context.Tasks
-                        .Where(t => updatedProject.TaskIds.Contains(t.Id))
-                        .ToListAsync();
-
-                    // Если количество найденных задач не совпадает с количеством переданных id
-                    if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
-                    {
-                        return BadRequest("Некоторые из переданных задач не найдены. Изменения не были применены.");
-                    }
-                    else
-                    {
-                        await taskService.UnassignTasksFromProject(id);
-                        foreach (var task in tasksToUpdate)
-                        {
-                            await taskService.AssignTasksToProject(id, updatedProject.TaskIds);
-                        }
-
-                    }
+                else {
+                    Console.WriteLine("Присваиваем новые значения задач");
                 }
+                //}
+                //// Если переданы новые задачи, привязываем их
+                //else
+                //{
+                //    Console.WriteLine("Были получены новые задачи, перепривязываем...");
+                //    var tasksToUpdate = await _context.Tasks
+                //        .Where(t => updatedProject.TaskIds.Contains(t.Id))
+                //        .ToListAsync();
+
+                //    // Если количество найденных задач не совпадает с количеством переданных id
+                //    if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
+                //    {
+                //        return BadRequest("Некоторые из переданных задач не найдены. Изменения не были применены.");
+                //    }
+                //    else
+                //    {
+                //        await taskService.UnassignTasksFromProject(id);
+                //        foreach (var task in tasksToUpdate)
+                //        {
+                //            await taskService.AssignTasksToProject(id, updatedProject.TaskIds);
+                //        }
+
+                //    }
+                //}
 
                 // Обновление полей объекта маппингом
                 _mapper.Map(updatedProject, project);
