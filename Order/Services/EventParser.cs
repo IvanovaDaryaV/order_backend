@@ -30,34 +30,43 @@ namespace Order.Services
             var events = new List<string>();
 
             // XPath для поиска блоков с событиями
-            var eventNodes = htmlDoc.DocumentNode.SelectNodes("//div[contains(@class, 'article')]");
-
+            var eventNodes = htmlDoc.DocumentNode.SelectNodes("//article[contains(@class, 'article')]");
             if (eventNodes != null)
             {
                 foreach (var eventNode in eventNodes)
                 {
                     // Извлекаем дату события
-                    var dateNode = eventNode.SelectSingleNode(".//div[contains(@class, 'article_date')]");
-                    var date = dateNode?.InnerText.Trim();
+                    var dateNode = eventNode.SelectSingleNode(".//div[@class='date']");
+                    string date = null;
+
+                    if (dateNode != null)
+                    {
+                        // Собираем дату из дочерних узлов
+                        var day = dateNode.SelectSingleNode(".//div[@class='day']")?.InnerText.Trim();
+                        var month = dateNode.SelectSingleNode(".//div[@class='month']")?.InnerText.Trim();
+                        var year = dateNode.SelectSingleNode(".//div[@class='year']")?.InnerText.Trim();
+                        date = $"{day} {month} {year}";
+                    }
 
                     // Извлекаем название события
-                    var infoNode = eventNode.SelectSingleNode(".//div[contains(@class, 'article_info')]");
-                    if (infoNode != null)
-                    {
-                        // Извлекаем название события из article_title
-                        var titleNode = infoNode.SelectSingleNode(".//div[contains(@class, 'article_title')]/a");
-                        var title = titleNode?.InnerText.Trim();
+                    var titleNode = eventNode.SelectSingleNode(".//div[@class='article_title']/a");
+                    var title = titleNode?.InnerText.Trim();
 
-                        // Формируем строку с результатом
-                        if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
-                        {
-                            events.Add($"{date}: {title}");
-                        }
+                    // Формируем строку с результатом
+                    if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
+                    {
+                        events.Add($"{date}: {title}");
                     }
                 }
+            }
+            else
+            {
+                Console.WriteLine("События не найдены на странице.");
             }
 
             return events;
         }
+
+
     }
 }
