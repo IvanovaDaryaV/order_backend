@@ -119,6 +119,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddHttpClient<ScheduleFetcherService>();
+builder.Services.AddHttpClient<EventParser>();
 
 var app = builder.Build();
 

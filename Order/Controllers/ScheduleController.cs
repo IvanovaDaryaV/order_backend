@@ -23,7 +23,7 @@ public class ScheduleController : ControllerBase
     }
 
     [HttpPost("upload-ics")]
-    public async Task<IActionResult> UploadICS(IFormFile file, Guid userId)
+    public async Task<IActionResult> UploadICS(IFormFile file, Guid userId, string type)
     {
         if (file == null || file.Length == 0)
         {
@@ -56,7 +56,7 @@ public class ScheduleController : ControllerBase
             evt.PeriodStart = component.DtStart.AsDateTimeOffset.DateTime;
             evt.PeriodEnd = component.DtEnd.AsDateTimeOffset.DateTime;
             evt.UserId = userId;
-            evt.Type = "modeus";
+            evt.Type = type;
 
             if (evt.PeriodEnd > DateTime.Today) evt.Status = false;
             else evt.Status = true;
