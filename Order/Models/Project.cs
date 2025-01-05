@@ -6,7 +6,7 @@ namespace Order.Models
 {
     public class Project
     {
-        internal readonly object Tasks;
+        //internal readonly object Tasks;
 
         [Key]
         [Required]
@@ -29,5 +29,6 @@ namespace Order.Models
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
         public List<string>? Links { get; set; } // Список ссылок (на материалы и тд)
         public ICollection<Event>? Events { get; set; } = new List<Event>();
+        public ICollection<Task>? Tasks { get; set; } = new List<Task>();
     }
 }

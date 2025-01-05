@@ -34,6 +34,8 @@ namespace Order.Models
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
         [ForeignKey("EventId")]
-        public Event? Event { get; set; } 
+        public Event? Event { get; set; }
+        [ForeignKey("ProjectId")]
+        public Project? Project { get; set; }
     }
 }

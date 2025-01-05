@@ -38,6 +38,25 @@ namespace Order.Controllers.EntitiesControllers
             });
         }
 
+        // GET: api/Project/{userId}
+        // Получить все проекты + их задачи у пользователя
+        [HttpGet("{userId:Guid}")]
+        public async Task<IActionResult> GetProjectsByUserId(Guid userId)
+        {
+            var projects = await _context.Projects
+                    .Where(project => project.UserId == userId)
+                    .Include(project => project.Tasks)
+                    .ToListAsync();
+
+            if (!projects.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(projects);
+        }
+
+
         // POST: api/Project
         [HttpPost]
         public async Task<IActionResult> CreateProject([FromBody] Project newProject)
