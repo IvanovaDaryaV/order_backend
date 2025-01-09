@@ -32,5 +32,6 @@ namespace Order.Models
         public User? User { get; set; }
         public string? Type { get; set; } // Тип события - личное или modeus
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
+        public ICollection<Task>? Tasks { get; set; } = new List<Task>();
     }
 }
