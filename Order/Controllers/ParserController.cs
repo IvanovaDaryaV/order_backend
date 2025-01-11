@@ -36,7 +36,7 @@ namespace Order.Controllers
         }
 
         [HttpPost("add-events-to-calender")]
-        public async Task<IActionResult> AddEventsFromICS(Guid userId, string eventText)
+        public async Task<IActionResult> AddEventsFromSite(Guid userId, string eventText)
         {
             string[] words = eventText.Split(':');
 

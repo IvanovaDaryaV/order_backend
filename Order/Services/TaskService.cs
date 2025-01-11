@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Order;
+using Order.Models;
 
 public class TaskService
 {
@@ -11,7 +12,7 @@ public class TaskService
     }
 
     // Метод для отвязывания задач от проекта
-    public async Task UnassignTasksFromProject(int projectId)
+    public async System.Threading.Tasks.Task UnassignTasksFromProject(int projectId)
     {
         var tasks = await _context.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
         foreach (var task in tasks)
@@ -23,19 +24,34 @@ public class TaskService
     }
 
     // Метод для привязки задач к проекту
-    public async Task AssignTasksToProject(int projectId, List<int> taskIds)
+    public async System.Threading.Tasks.Task AssignTasksToProject(int projectId, List<int> taskIds)
     {
         var tasks = await _context.Tasks.Where(t => taskIds.Contains(t.Id)).ToListAsync();
+        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+
         foreach (var task in tasks)
         {
             task.ProjectId = projectId;
+
+            // Логика наследования контекста:
+            // если проект имеет контекст, задачи его наследует
+            // если нет, у задач будет свой собственный, либо null
+
+            // Даже если задача уже имеет свой контекст,
+            // он будет перезаписан
+
+            if (project.ContextId != null)
+            {
+                task.ContextId = project.ContextId;
+            }
+
             _context.Entry(task).State = EntityState.Modified;
         }
         await _context.SaveChangesAsync();
     }
 
     // Метод для отвязывания задач от события
-    public async Task UnassignTasksFromEvent(int eventId)
+    public async System.Threading.Tasks.Task UnassignTasksFromEvent(int eventId)
     {
         var tasks = await _context.Tasks.Where(t => t.EventId == eventId).ToListAsync();
         foreach (var task in tasks)
@@ -47,9 +63,10 @@ public class TaskService
     }
 
     // Метод для привязки задач к событию
-    public async Task AssignTasksToEvent(int eventId, List<int> taskIds)
+    public async System.Threading.Tasks.Task AssignTasksToEvent(int eventId, List<int> taskIds)
     {
         var tasks = await _context.Tasks.Where(t => taskIds.Contains(t.Id)).ToListAsync();
+
         foreach (var task in tasks)
         {
             task.EventId = eventId;
@@ -59,7 +76,7 @@ public class TaskService
     }
 
     // Метод для удаления задачи из события и проекта, к которому она привязана
-    public async Task RemoveTask(int taskId)
+    public async System.Threading.Tasks.Task RemoveTask(int taskId)
     {
         var task = await _context.Tasks.FindAsync(taskId);
         if (task == null)
