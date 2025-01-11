@@ -60,12 +60,11 @@ namespace Order.Controllers.EntitiesControllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var evt = await _context.Events.FindAsync(id);
+            var evt = await _context.Events.Include(e => e.Tasks).FirstOrDefaultAsync(e => e.Id == id);
             if (evt == null)
                 return NotFound();
 
             // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже указано
-
             if (updatedEvent.UserId == null)
             {
                 updatedEvent.UserId = evt.UserId;
@@ -94,6 +93,16 @@ namespace Order.Controllers.EntitiesControllers
                 }
 
             }
+
+            // Если при изменении объекта события не были переданы задачи,
+            // список остается без изменений. Если не сделать это вручную,
+            // поле занулится
+            else
+            {
+                var taskIds = evt.Tasks.Select(t => t.Id).ToList();
+                updatedEvent.TaskIds = taskIds;
+            }
+
             // Обновление полей объекта маппингом
             _mapper.Map(updatedEvent, evt);
 

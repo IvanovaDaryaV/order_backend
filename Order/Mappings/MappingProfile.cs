@@ -10,7 +10,11 @@ namespace Order.Mappings
     {
         public MappingProfile()
         {
-            CreateMap<EventDto, Event>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            //CreateMap<EventDto, Event>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<EventDto, Event>().ForAllMembers(opts =>
+                opts.Condition((src, dest, srcMember) =>
+                    srcMember != null &&
+                    (!(srcMember is IEnumerable<int> list) || list.Any())));
 
             CreateMap<ProjectDto, Project>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             
