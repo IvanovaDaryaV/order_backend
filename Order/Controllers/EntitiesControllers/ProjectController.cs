@@ -39,13 +39,16 @@ namespace Order.Controllers.EntitiesControllers
         }
 
         // GET: api/Project/{userId}
-        // Получить все проекты + их задачи у пользователя
+        // Получить все проекты + их ЗАДАЧИ и СОБЫТИЯ у пользователя
+
+        // Для отрисовки вкладки с проектами
         [HttpGet("{userId:Guid}")]
-        public async Task<IActionResult> GetProjectsByUserId(Guid userId)
+        public async Task<IActionResult> GetProjectByUserId(Guid userId)
         {
             var projects = await _context.Projects
                     .Where(project => project.UserId == userId)
                     .Include(project => project.Tasks)
+                    .Include(project => project.Events)
                     .ToListAsync();
 
             if (!projects.Any())
@@ -55,7 +58,6 @@ namespace Order.Controllers.EntitiesControllers
 
             return Ok(projects);
         }
-
 
         // POST: api/Project
         [HttpPost]
