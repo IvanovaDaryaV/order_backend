@@ -124,10 +124,14 @@ namespace Order.Controllers.EntitiesControllers
                         }
                         else
                         {
+                            // Конфликт возникает, если у задачи из списка уже есть проект, к которому она привязана,
+                            // и этот проект не текущий, а другой.
+                            // Если задача уже привязана к этому проекту, конфликта не будет
+                            // Например, чтобы дополнить список, не нужно переприсваивать значения заново
                             bool conflict = false;
                             foreach (var task in tasksToUpdate)
                             {
-                                if (task.ProjectId != null)
+                                if (task.ProjectId != null && task.ProjectId != id)
                                     conflict = true;
                             }
 

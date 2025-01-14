@@ -98,10 +98,14 @@ namespace Order.Controllers.EntitiesControllers
                         }
                         else
                         {
+                            // Конфликт возникает, если у задачи из списка уже есть событие, к которому она привязана,
+                            // и это событие не текущее.
+                            // Если задача уже привязана к этому событию, конфликта не будет
+                            // Например, чтобы дополнить список, не нужно переприсваивать значения заново
                             bool conflict = false;
                             foreach (var task in tasksToUpdate)
                             {
-                                if (task.EventId != null)
+                                if (task.EventId != null && task.EventId != id)
                                     conflict = true;
                             }
                             if (!conflict)
