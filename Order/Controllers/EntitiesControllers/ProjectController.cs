@@ -84,21 +84,21 @@ namespace Order.Controllers.EntitiesControllers
                 return NotFound();
             }
 
-            // Преобразуем JSON в DTO
-            var updatedProject = JsonSerializer.Deserialize<ProjectDto>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            if (updatedProject == null)
-                return BadRequest("Invalid JSON format.");
-
-            var jsonString = body.ToString();
-            var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
-
             try
             {
-                
+                // Преобразуем JSON в DTO
+                var updatedProject = JsonSerializer.Deserialize<ProjectDto>(body, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (updatedProject == null)
+                    return BadRequest("Invalid JSON format.");
+
+                var jsonString = body.ToString();
+                var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+
+
                 // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 
                 if (updatedProject.UserId == null)
@@ -171,19 +171,12 @@ namespace Order.Controllers.EntitiesControllers
                 _context.Projects.Update(project);
                 await _context.SaveChangesAsync();
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                // Возвращаем ошибку, если поле не допускает null
                 return BadRequest(new { error = ex.Message });
-            }
-            catch (DbUpdateException dbEx)
-            {
-                // Перехватываем исключение уровня базы данных
-                return BadRequest(new { error = "Ошибка базы данных", details = dbEx.Message });
             }
             return NoContent();
             
-
         }
 
 

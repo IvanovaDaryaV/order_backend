@@ -64,21 +64,20 @@ namespace Order.Controllers.EntitiesControllers
             if (evt == null)
                 return NotFound();
 
-
-            // Преобразуем JSON в DTO
-            var updatedEvent = JsonSerializer.Deserialize<EventDto>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            if (updatedEvent == null)
-                return BadRequest("Invalid JSON format.");
-
-            var jsonString = body.ToString();
-            var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
-
             try
             {
+                // Преобразуем JSON в DTO
+                var updatedEvent = JsonSerializer.Deserialize<EventDto>(body, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (updatedEvent == null)
+                    return BadRequest("Invalid JSON format.");
+
+                var jsonString = body.ToString();
+                var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+
                 // Устанавливаем значения null для соответствующих полей
                 mainService.SetNullFields(evt, jsonDict);
 
@@ -149,15 +148,9 @@ namespace Order.Controllers.EntitiesControllers
                 _context.Events.Update(evt);
                 await _context.SaveChangesAsync();
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                // Возвращаем ошибку, если поле не допускает null
                 return BadRequest(new { error = ex.Message });
-            }
-            catch (DbUpdateException dbEx)
-            {
-                // Перехватываем исключение уровня базы данных
-                return BadRequest(new { error = "Ошибка базы данных", details = dbEx.Message });
             }
             return NoContent();
 
