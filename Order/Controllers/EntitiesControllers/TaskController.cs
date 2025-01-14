@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order.Models;
 using Order.Models.DTO;
+using System.Text.Json;
 
 namespace Order.Controllers.EntitiesControllers
 {
@@ -47,7 +48,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // POST: api/Task
         [HttpPost]
-        public async Task<IActionResult> CreateTask([FromBody] Models.Task newTask, [FromServices] TaskService taskService)
+        public async Task<IActionResult> CreateTask([FromBody] Models.Task newTask, [FromServices] MainService taskService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -63,7 +64,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Task/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDto updatedTask)
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] JsonElement body, [FromServices] MainService mainService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -72,25 +73,56 @@ namespace Order.Controllers.EntitiesControllers
             if (task == null)
                 return NotFound();
 
-            // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение,
-            // которое сейчас в задаче
-
-            if (updatedTask.UserId == null)
+            // Преобразуем JSON в DTO
+            var updatedTask = JsonSerializer.Deserialize<TaskDto>(body, new JsonSerializerOptions
             {
-                updatedTask.UserId = task.UserId;
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (updatedTask == null)
+                return BadRequest("Invalid JSON format.");
+
+            var jsonString = body.ToString();
+            var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+
+            try
+            {
+                // Устанавливаем значения null для соответствующих полей
+                mainService.SetNullFields(task, jsonDict);
+                // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение,
+                // которое сейчас в задаче
+
+                if (updatedTask.UserId == null)
+                {
+                    updatedTask.UserId = task.UserId;
+                }
+
+
+                _mapper.Map(updatedTask, task);
+
+                // Валидация
+                mainService.ValidateEntityForNotNullConstraints(task);
+
+                _context.Tasks.Update(task);
+                await _context.SaveChangesAsync();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Возвращаем ошибку, если поле не допускает null
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Перехватываем исключение уровня базы данных
+                return BadRequest(new { error = "Ошибка базы данных", details = dbEx.Message });
             }
 
-
-            _mapper.Map(updatedTask, task);
-
-            _context.Tasks.Update(task);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
 
         // DELETE: api/Task/{id}
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteTask(int id, [FromServices] TaskService taskService)
+        public async Task<IActionResult> DeleteTask(int id, [FromServices] MainService taskService)
         {
             var task = await _context.Tasks.FindAsync(id);
             if (task == null)

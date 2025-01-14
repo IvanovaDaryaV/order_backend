@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order.Models;
 using Order.Models.DTO;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Order.Controllers.EntitiesControllers
@@ -72,7 +73,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Project/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto updatedProject, [FromServices] TaskService taskService)
+        public async Task<IActionResult> UpdateProject(int id, [FromBody] JsonElement body, [FromServices] MainService mainService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -82,9 +83,26 @@ namespace Order.Controllers.EntitiesControllers
             {
                 return NotFound();
             }
-               
-            else
+
+            // Преобразуем JSON в DTO
+            var updatedProject = JsonSerializer.Deserialize<ProjectDto>(body, new JsonSerializerOptions
             {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (updatedProject == null)
+                return BadRequest("Invalid JSON format.");
+
+            var jsonString = body.ToString();
+            var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+
+            try
+            {
+                // Устанавливаем значения null для соответствующих полей
+                mainService.SetNullFields(project, jsonDict);
+            
+
+
                 // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 
                 if (updatedProject.UserId == null)
@@ -106,10 +124,10 @@ namespace Order.Controllers.EntitiesControllers
                     }
                     else
                     {
-                        await taskService.UnassignTasksFromProject(id);
+                        await mainService.UnassignTasksFromProject(id);
                         foreach (var task in tasksToUpdate)
                         {
-                            await taskService.AssignTasksToProject(id, updatedProject.TaskIds);
+                            await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
                         }
 
                     }
@@ -128,12 +146,25 @@ namespace Order.Controllers.EntitiesControllers
                 // Обновление полей объекта маппингом
                 _mapper.Map(updatedProject, project);
 
+                // Валидация
+                mainService.ValidateEntityForNotNullConstraints(project);
+
                 // Сохраняем изменения
                 _context.Projects.Update(project);
                 await _context.SaveChangesAsync();
-
-                return NoContent();
             }
+            catch (InvalidOperationException ex)
+            {
+                // Возвращаем ошибку, если поле не допускает null
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Перехватываем исключение уровня базы данных
+                return BadRequest(new { error = "Ошибка базы данных", details = dbEx.Message });
+            }
+            return NoContent();
+            
 
         }
 

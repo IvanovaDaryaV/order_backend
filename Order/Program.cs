@@ -34,7 +34,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddScoped<ScheduleSharingService>();
 
-builder.Services.AddScoped<TaskService>()
+builder.Services.AddScoped<MainService>()
     .AddAuthentication(options =>
     {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

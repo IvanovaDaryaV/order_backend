@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Order;
 using Order.Models;
 using Order.Models.DTO;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -49,7 +50,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Context/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateContext(int id, [FromBody] ContextDto updatedContext)
+        public async Task<IActionResult> UpdateContext(int id, [FromBody] JsonElement body, [FromServices] MainService mainService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -58,20 +59,46 @@ namespace Order.Controllers.EntitiesControllers
             if (context == null)
                 return NotFound();
 
-            // Чтобы не нарушать связь, если userId не изменяется, просто берем прошлое значение
-
-            if (updatedContext.UserId == null)
+            // Преобразуем JSON в DTO
+            var updatedContext = JsonSerializer.Deserialize<ContextDto>(body, new JsonSerializerOptions
             {
-                updatedContext.UserId = context.UserId;
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (updatedContext == null)
+                return BadRequest("Invalid JSON format.");
+
+            var jsonString = body.ToString();
+            var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+
+            try
+            {
+                // Устанавливаем значения null для соответствующих полей
+                mainService.SetNullFields(context, jsonDict);
+
+                _mapper.Map(updatedContext, context);
+
+                // Валидация
+                mainService.ValidateEntityForNotNullConstraints(context);
+
+                _context.Contexts.Update(context);
+                await _context.SaveChangesAsync();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Возвращаем ошибку, если поле не допускает null
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Перехватываем исключение уровня базы данных
+                return BadRequest(new { error = "Ошибка базы данных", details = dbEx.Message });
             }
 
-            _mapper.Map(updatedContext, context);
-
-            _context.Contexts.Update(context);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
 
+        
         // DELETE: api/Context/{id}
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteContext(int id)
@@ -90,6 +117,11 @@ namespace Order.Controllers.EntitiesControllers
             {
                 return NotFound(ex.Message);
             }
+        }
+        private string ModifyNullValues(string jsonString)
+        {
+            // Модифицируем все поля, которые равны null в строку "null"
+            return jsonString.Replace(": null", ": \"null\""); // Преобразуем null в "null"
         }
     }
 }

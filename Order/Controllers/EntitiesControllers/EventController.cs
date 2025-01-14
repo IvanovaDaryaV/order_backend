@@ -55,7 +55,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // PUT: api/Event/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateEvent(int id, [FromBody] EventDto updatedEvent, [FromServices] TaskService taskService)
+        public async Task<IActionResult> UpdateEvent(int id, [FromBody] JsonElement body, [FromServices] MainService mainService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -64,52 +64,86 @@ namespace Order.Controllers.EntitiesControllers
             if (evt == null)
                 return NotFound();
 
-            // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже указано
-            if (updatedEvent.UserId == null)
-            {
-                updatedEvent.UserId = evt.UserId;
-            }
 
-            // Если переданы новые задачи, привязываем их
-            if (updatedEvent.TaskIds != null && updatedEvent.TaskIds.Any())
+            // Преобразуем JSON в DTO
+            var updatedEvent = JsonSerializer.Deserialize<EventDto>(body, new JsonSerializerOptions
             {
-                var tasksToUpdate = await _context.Tasks
-                    .Where(t => updatedEvent.TaskIds.Contains(t.Id))
-                    .ToListAsync();
+                PropertyNameCaseInsensitive = true
+            });
 
-                // Если количество найденных задач не совпадает с количеством переданных id
-                if (tasksToUpdate.Count != updatedEvent.TaskIds.Count)
-                {
-                    return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
-                }
-                else
-                {
-                    await taskService.UnassignTasksFromEvent(id);
-                    foreach (var task in tasksToUpdate)
+            if (updatedEvent == null)
+                return BadRequest("Invalid JSON format.");
+
+            var jsonString = body.ToString();
+            var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+
+            try
+            {
+                // Устанавливаем значения null для соответствующих полей
+                mainService.SetNullFields(evt, jsonDict);
+            
+
+
+                // Если переданы новые задачи, привязываем их
+                if (updatedEvent.TaskIds != null && updatedEvent.TaskIds.Any())
                     {
-                        await taskService.AssignTasksToEvent(id, updatedEvent.TaskIds);
+                    var tasksToUpdate = await _context.Tasks
+                        .Where(t => updatedEvent.TaskIds.Contains(t.Id))
+                        .ToListAsync();
+
+                    // Если количество найденных задач не совпадает с количеством переданных id
+                    if (tasksToUpdate.Count != updatedEvent.TaskIds.Count)
+                    {
+                        return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
+                    }
+                    else
+                    {
+                        await mainService.UnassignTasksFromEvent(id);
+                        foreach (var task in tasksToUpdate)
+                        {
+                            await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
+                        }
+
                     }
 
                 }
 
-            }
+                // Если при изменении объекта события не были переданы задачи,
+                // список остается без изменений. Если не сделать это вручную,
+                // поле занулится
+                else
+                {
+                    var taskIds = evt.Tasks.Select(t => t.Id).ToList();
+                    updatedEvent.TaskIds = taskIds;
+                }
 
-            // Если при изменении объекта события не были переданы задачи,
-            // список остается без изменений. Если не сделать это вручную,
-            // поле занулится
-            else
+                // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
+
+                if (updatedEvent.UserId == null)
+                {
+                    updatedEvent.UserId = evt.UserId;
+                }
+
+                _mapper.Map(updatedEvent, evt);
+
+                // Валидация
+                mainService.ValidateEntityForNotNullConstraints(evt);
+
+                _context.Events.Update(evt);
+                await _context.SaveChangesAsync();
+            }
+            catch (InvalidOperationException ex)
             {
-                var taskIds = evt.Tasks.Select(t => t.Id).ToList();
-                updatedEvent.TaskIds = taskIds;
+                // Возвращаем ошибку, если поле не допускает null
+                return BadRequest(new { error = ex.Message });
             }
-
-            // Обновление полей объекта маппингом
-            _mapper.Map(updatedEvent, evt);
-
-            _context.Events.Update(evt);
-            await _context.SaveChangesAsync();
-
+            catch (DbUpdateException dbEx)
+            {
+                // Перехватываем исключение уровня базы данных
+                return BadRequest(new { error = "Ошибка базы данных", details = dbEx.Message });
+            }
             return NoContent();
+
         }
 
         // DELETE: api/Event/{id}
