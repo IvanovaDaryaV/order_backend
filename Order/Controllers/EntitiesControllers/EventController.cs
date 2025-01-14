@@ -99,10 +99,23 @@ namespace Order.Controllers.EntitiesControllers
                         }
                         else
                         {
-                            await mainService.UnassignTasksFromEvent(id);
+                            bool conflict = false;
                             foreach (var task in tasksToUpdate)
                             {
-                                await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
+                                if (task.EventId != null)
+                                    conflict = true;
+                            }
+                            if (!conflict)
+                            {
+                                await mainService.UnassignTasksFromEvent(id);
+                                foreach (var task in tasksToUpdate)
+                                {
+                                    await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
+                                }
+                            }
+                            else
+                            {
+                                return BadRequest("Конфликт: задача(и) уже привязана к другому событию.  Изменения не были применены.");
                             }
 
                         }
@@ -110,7 +123,7 @@ namespace Order.Controllers.EntitiesControllers
                     // Если передано значение null
                     else
                     {
-                        updatedEvent.TaskIds = null;
+                        await mainService.UnassignTasksFromEvent(id);
                     }
                 }
                 // Если новых задач не было - без изменений

@@ -124,18 +124,31 @@ namespace Order.Controllers.EntitiesControllers
                         }
                         else
                         {
-                            await mainService.UnassignTasksFromProject(id);
+                            bool conflict = false;
                             foreach (var task in tasksToUpdate)
                             {
-                                await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
+                                if (task.ProjectId != null)
+                                    conflict = true;
                             }
 
+                            if (!conflict)
+                            {
+                                await mainService.UnassignTasksFromProject(id);
+                                foreach (var task in tasksToUpdate)
+                                {
+                                    await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
+                                }
+                            }
+                            else
+                            {
+                                return BadRequest("Конфликт: задача(и) уже привязана к другому проекту.  Изменения не были применены.");
+                            }    
                         }
                     }
                     // Если передано значение null
                     else
                     {
-                        updatedProject.TaskIds = null;
+                        await mainService.UnassignTasksFromProject(id);
                     }
                 }
                 // Если новых задач не было - без изменений
