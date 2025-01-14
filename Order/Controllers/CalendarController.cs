@@ -13,7 +13,7 @@ using System.Text.Json;
 namespace Order.Controllers
 {
     [ApiController]
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     public class CalendarController : ControllerBase
     {

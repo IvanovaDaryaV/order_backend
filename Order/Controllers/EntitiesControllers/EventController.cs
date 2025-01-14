@@ -12,7 +12,7 @@ namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    //[Authorize]
+    [Authorize]
     public class EventController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -133,14 +133,6 @@ namespace Order.Controllers.EntitiesControllers
                     updatedEvent.TaskIds = taskIds;
                 }
 
-                //// Если при изменении объекта события не были переданы задачи,
-                //// список остается без изменений. Если не сделать это вручную,
-                //// поле занулится
-                //else
-                //{
-                //    var taskIds = evt.Tasks.Select(t => t.Id).ToList();
-                //    updatedEvent.TaskIds = taskIds;
-                //}
 
                 // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 

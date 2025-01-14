@@ -112,7 +112,6 @@ public class MainService
         {
             if (jsonDict[key] == null)
             {
-                Console.WriteLine(key);
                 var propertyName = char.ToUpper(key[0]) + key.Substring(1);
                 var property = obj.GetType().GetProperty(propertyName);
 

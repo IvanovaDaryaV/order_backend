@@ -9,7 +9,7 @@ using System.Text.Json;
 namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     public class TaskController : Controller
     {
@@ -52,10 +52,6 @@ namespace Order.Controllers.EntitiesControllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            // если при создании задачи указано, что она относится к какому-то определенному проекту
-            //if (newTask.ProjectId != null)
-            //    await taskService.AssignTasksToProject((int)newTask.ProjectId, new List<int> (newTask.Id));
 
             _context.Tasks.Add(newTask);
             await _context.SaveChangesAsync();

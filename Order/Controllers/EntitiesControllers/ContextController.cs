@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     public class ContextController : Controller
     {
@@ -117,11 +117,6 @@ namespace Order.Controllers.EntitiesControllers
             {
                 return NotFound(ex.Message);
             }
-        }
-        private string ModifyNullValues(string jsonString)
-        {
-            // Модифицируем все поля, которые равны null в строку "null"
-            return jsonString.Replace(": null", ": \"null\""); // Преобразуем null в "null"
         }
     }
 }

@@ -7,10 +7,12 @@ using Order.Models;
 using Order.Models.DTO;
 using Ical.Net;
 using Order;
+using Microsoft.AspNetCore.Authorization;
 
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ScheduleController : ControllerBase
 {
     private readonly ScheduleFetcherService _modeusService;

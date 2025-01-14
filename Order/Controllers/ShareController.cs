@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order.Models;
 using Order.Services;
@@ -35,6 +36,7 @@ namespace Order.Controllers
             return Ok();
         }
 
+        [Authorize]
         [HttpPost("create-public-link")]
         public async Task<IActionResult> CreatePublicLink(Guid userId, DateTime periodStart, DateTime periodEnd, int[] privateEventsId)
         {
@@ -45,7 +47,9 @@ namespace Order.Controllers
             return Ok(new { publicLink });
         }
 
+
         // Непосредственно получение данных
+        [Authorize]
         [HttpGet("public/{token}")]
         public async Task<IActionResult> GetScheduleByPublicLink(string token)
         {

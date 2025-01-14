@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     public class ProjectController : Controller
     {
@@ -157,39 +157,6 @@ namespace Order.Controllers.EntitiesControllers
                     var taskIds = project.Tasks.Select(t => t.Id).ToList();
                     updatedProject.TaskIds = taskIds;
                 }
-
-                // Если переданы новые задачи, привязываем их
-                //if (updatedProject.TaskIds != null && updatedProject.TaskIds.Any())
-                //{
-                //    var tasksToUpdate = await _context.Tasks
-                //        .Where(t => updatedProject.TaskIds.Contains(t.Id))
-                //        .ToListAsync();
-
-                //    // Если количество найденных задач не совпадает с количеством переданных id
-                //    if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
-                //    {
-                //        return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
-                //    }
-                //    else
-                //    {
-                //        await mainService.UnassignTasksFromProject(id);
-                //        foreach (var task in tasksToUpdate)
-                //        {
-                //            await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
-                //        }
-
-                //    }
-
-                //}
-
-                //// Если при изменении объекта проекта были переданы задачи,
-                //// список остается без изменений. Если не сделать это вручную,
-                //// поле занулится
-                //else
-                //{
-                //    var taskIds = project.Tasks.Select(t => t.Id).ToList();
-                //    updatedProject.TaskIds = taskIds;
-                //}
 
                 // Устанавливаем значения null для соответствующих полей
                 mainService.SetNullFields(project, jsonDict);
