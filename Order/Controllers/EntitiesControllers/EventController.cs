@@ -81,41 +81,53 @@ namespace Order.Controllers.EntitiesControllers
             {
                 // Устанавливаем значения null для соответствующих полей
                 mainService.SetNullFields(evt, jsonDict);
-            
 
-
-                // Если переданы новые задачи, привязываем их
-                if (updatedEvent.TaskIds != null && updatedEvent.TaskIds.Any())
+                // Проверка: было ли передано новое значение TaskIds
+                if (jsonDict.ContainsKey("taskIds"))
+                {
+                    // Значение было передано и оно не null
+                    if (jsonDict["taskIds"] != null)
                     {
-                    var tasksToUpdate = await _context.Tasks
-                        .Where(t => updatedEvent.TaskIds.Contains(t.Id))
-                        .ToListAsync();
+                        var tasksToUpdate = await _context.Tasks
+                            .Where(t => updatedEvent.TaskIds.Contains(t.Id))
+                            .ToListAsync();
 
-                    // Если количество найденных задач не совпадает с количеством переданных id
-                    if (tasksToUpdate.Count != updatedEvent.TaskIds.Count)
-                    {
-                        return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
+                        // Если количество найденных задач не совпадает с количеством переданных id
+                        if (tasksToUpdate.Count != updatedEvent.TaskIds.Count)
+                        {
+                            return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
+                        }
+                        else
+                        {
+                            await mainService.UnassignTasksFromEvent(id);
+                            foreach (var task in tasksToUpdate)
+                            {
+                                await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
+                            }
+
+                        }
                     }
+                    // Если передано значение null
                     else
                     {
-                        await mainService.UnassignTasksFromEvent(id);
-                        foreach (var task in tasksToUpdate)
-                        {
-                            await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
-                        }
-
+                        updatedEvent.TaskIds = null;
                     }
-
                 }
-
-                // Если при изменении объекта события не были переданы задачи,
-                // список остается без изменений. Если не сделать это вручную,
-                // поле занулится
+                // Если новых задач не было - без изменений
                 else
                 {
                     var taskIds = evt.Tasks.Select(t => t.Id).ToList();
                     updatedEvent.TaskIds = taskIds;
                 }
+
+                //// Если при изменении объекта события не были переданы задачи,
+                //// список остается без изменений. Если не сделать это вручную,
+                //// поле занулится
+                //else
+                //{
+                //    var taskIds = evt.Tasks.Select(t => t.Id).ToList();
+                //    updatedEvent.TaskIds = taskIds;
+                //}
 
                 // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 

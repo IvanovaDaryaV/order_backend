@@ -98,11 +98,7 @@ namespace Order.Controllers.EntitiesControllers
 
             try
             {
-                // Устанавливаем значения null для соответствующих полей
-                mainService.SetNullFields(project, jsonDict);
-            
-
-
+                
                 // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 
                 if (updatedProject.UserId == null)
@@ -110,38 +106,80 @@ namespace Order.Controllers.EntitiesControllers
                     updatedProject.UserId = project.UserId;
                 }
 
-                // Если переданы новые задачи, привязываем их
-                if (updatedProject.TaskIds != null && updatedProject.TaskIds.Any())
-                {
-                    var tasksToUpdate = await _context.Tasks
-                        .Where(t => updatedProject.TaskIds.Contains(t.Id))
-                        .ToListAsync();
 
-                    // Если количество найденных задач не совпадает с количеством переданных id
-                    if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
+                // Проверка: было ли передано новое значение TaskIds
+                if (jsonDict.ContainsKey("taskIds"))
+                {
+                    // Значение было передано и оно не null
+                    if (jsonDict["taskIds"] != null)
                     {
-                        return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
+                        var tasksToUpdate = await _context.Tasks
+                            .Where(t => updatedProject.TaskIds.Contains(t.Id))
+                            .ToListAsync();
+
+                        // Если количество найденных задач не совпадает с количеством переданных id
+                        if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
+                        {
+                            return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
+                        }
+                        else
+                        {
+                            await mainService.UnassignTasksFromProject(id);
+                            foreach (var task in tasksToUpdate)
+                            {
+                                await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
+                            }
+
+                        }
                     }
+                    // Если передано значение null
                     else
                     {
-                        await mainService.UnassignTasksFromProject(id);
-                        foreach (var task in tasksToUpdate)
-                        {
-                            await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
-                        }
-
+                        updatedProject.TaskIds = null;
                     }
-
                 }
-
-                // Если при изменении объекта проекта были переданы задачи,
-                // список остается без изменений. Если не сделать это вручную,
-                // поле занулится
+                // Если новых задач не было - без изменений
                 else
                 {
                     var taskIds = project.Tasks.Select(t => t.Id).ToList();
                     updatedProject.TaskIds = taskIds;
                 }
+
+                // Если переданы новые задачи, привязываем их
+                //if (updatedProject.TaskIds != null && updatedProject.TaskIds.Any())
+                //{
+                //    var tasksToUpdate = await _context.Tasks
+                //        .Where(t => updatedProject.TaskIds.Contains(t.Id))
+                //        .ToListAsync();
+
+                //    // Если количество найденных задач не совпадает с количеством переданных id
+                //    if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
+                //    {
+                //        return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
+                //    }
+                //    else
+                //    {
+                //        await mainService.UnassignTasksFromProject(id);
+                //        foreach (var task in tasksToUpdate)
+                //        {
+                //            await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
+                //        }
+
+                //    }
+
+                //}
+
+                //// Если при изменении объекта проекта были переданы задачи,
+                //// список остается без изменений. Если не сделать это вручную,
+                //// поле занулится
+                //else
+                //{
+                //    var taskIds = project.Tasks.Select(t => t.Id).ToList();
+                //    updatedProject.TaskIds = taskIds;
+                //}
+
+                // Устанавливаем значения null для соответствующих полей
+                mainService.SetNullFields(project, jsonDict);
 
                 // Обновление полей объекта маппингом
                 _mapper.Map(updatedProject, project);
