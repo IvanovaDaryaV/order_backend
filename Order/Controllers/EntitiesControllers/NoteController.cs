@@ -68,6 +68,8 @@ namespace Order.Controllers.EntitiesControllers
                 return NotFound();
 
             note.Text = newText;
+            note.LastEdited = DateTime.Now;
+
             _context.Notes.Update(note);
             await _context.SaveChangesAsync();
             return NoContent();

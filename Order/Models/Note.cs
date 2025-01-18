@@ -18,6 +18,8 @@ namespace Order.Models
 
         [Column(TypeName = "timestamp without time zone")]
         public DateTime? DateCreated { get; set; }
+        [Column(TypeName = "timestamp without time zone")]
+        public DateTime? LastEdited { get; set; }
 
         [ForeignKey("UserId")]
         [JsonIgnore]
