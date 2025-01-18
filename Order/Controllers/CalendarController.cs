@@ -65,10 +65,18 @@ namespace Order.Controllers
             if (user == null)
                 return NotFound($"User with ID {userId} not found.");
 
+            //var filteredTasks = user.Tasks?
+            //                        .Where(task => (
+            //                        (task.HardDeadline.HasValue && task.HardDeadline >= startDate && task.HardDeadline <= endDate) ||
+            //                        (task.CalendarDate.HasValue && task.CalendarDate >= startDate && task.CalendarDate <= endDate)
+            //                        ))
+            //                        .ToList();
+
+            // Возвращать все задачи, даже если у них не все поля заполнены 
             var filteredTasks = user.Tasks?
                                     .Where(task => (
-                                    (task.HardDeadline.HasValue && task.HardDeadline >= startDate && task.HardDeadline <= endDate) ||
-                                    (task.CalendarDate.HasValue && task.CalendarDate >= startDate && task.CalendarDate <= endDate)
+                                    (task.HardDeadline >= startDate && task.HardDeadline <= endDate) ||
+                                    (task.CalendarDate >= startDate && task.CalendarDate <= endDate)
                                     ))
                                     .ToList();
 
