@@ -13,6 +13,7 @@ namespace Order
         public DbSet<Models.Task> Tasks { get; set; }
         public DbSet<Context> Contexts { get; set; }
         public DbSet<Event> Events { get; set; }
+        public DbSet<Note> Notes { get; set; }
         public DbSet<ScheduleSharing> ScheduleSharings { get; set; }
         private readonly IConfiguration _configuration;
 
@@ -59,6 +60,11 @@ namespace Order
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Contexts)
                 .WithOne(c => c.User)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Notes)
+                .WithOne(n => n.User)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

@@ -32,19 +32,6 @@ namespace Order.Controllers.EntitiesControllers
             return Ok(task);
         }
 
-        [HttpGet("inbox/{userId:Guid}")]
-        public async Task<IActionResult> GetInboxTasks(Guid userId)
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null) return NotFound();
-
-            var inboxTasks = await _context.Tasks
-                .Where(task => task.UserId == user.Id &&
-                task.ContextId == null && task.ProjectId == null && task.EventId == null && task.CalendarDate == null)
-                .ToListAsync();
-
-            return Ok(inboxTasks);
-        }
 
         // POST: api/Task
         [HttpPost]
