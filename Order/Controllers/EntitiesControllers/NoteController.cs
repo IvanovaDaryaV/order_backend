@@ -49,6 +49,8 @@ namespace Order.Controllers.EntitiesControllers
         [HttpPost]
         public async Task<IActionResult> CreateNote([FromBody] Note newNote)
         {
+            newNote.DateCreated = DateTime.Now;
+
             _context.Notes.Add(newNote);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetNoteById), new { id = newNote.Id }, newNote);

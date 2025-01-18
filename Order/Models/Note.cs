@@ -16,6 +16,9 @@ namespace Order.Models
         [Column(TypeName = "uuid")]
         public Guid UserId { get; set; }
 
+        [Column(TypeName = "timestamp without time zone")]
+        public DateTime? DateCreated { get; set; }
+
         [ForeignKey("UserId")]
         [JsonIgnore]
         public User? User { get; set; }
