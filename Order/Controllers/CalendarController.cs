@@ -76,7 +76,8 @@ namespace Order.Controllers
             var filteredTasks = user.Tasks?
                                     .Where(task => (
                                     (task.HardDeadline >= startDate && task.HardDeadline <= endDate) ||
-                                    (task.CalendarDate >= startDate && task.CalendarDate <= endDate)
+                                    (task.CalendarDate >= startDate && task.CalendarDate <= endDate) ||
+                                    (task.SoftDeadline >= startDate && task.SoftDeadline <= endDate)
                                     ))
                                     .ToList();
 

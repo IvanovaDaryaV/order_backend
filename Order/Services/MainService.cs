@@ -31,6 +31,12 @@ public class MainService
         var tasks = await _context.Tasks.Where(t => taskIds.Contains(t.Id)).ToListAsync();
         var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
 
+        if (project == null)
+        {
+            throw new ArgumentException("Project not found");
+        }
+
+
         foreach (var task in tasks)
         {
             task.ProjectId = projectId;
@@ -86,7 +92,7 @@ public class MainService
 
         var project = await _context.Projects.FindAsync(task.ProjectId);
 
-        if (project != null)
+        if (project != null && project.TaskIds != null)
         {
             project.TaskIds.Remove(taskId); // Удаляем ID задачи из списка TaskIds
             _context.Entry(project).State = EntityState.Modified;
@@ -94,7 +100,7 @@ public class MainService
 
         var evt = await _context.Events.FindAsync(task.EventId);
 
-        if (evt != null)
+        if (evt != null && evt.TaskIds != null)
         {
             evt.TaskIds.Remove(taskId); // Удаляем ID задачи из списка TaskIds
             _context.Entry(evt).State = EntityState.Modified;
