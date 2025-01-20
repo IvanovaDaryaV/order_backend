@@ -15,10 +15,12 @@ namespace Order.Controllers.EntitiesControllers
     public class NoteController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public NoteController(ApplicationDbContext context)
+        public NoteController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/inbox/{id}
@@ -50,15 +52,16 @@ namespace Order.Controllers.EntitiesControllers
         public async Task<IActionResult> CreateNote([FromBody] Note newNote)
         {
             newNote.DateCreated = DateTime.Now;
+            newNote.LastEdited = DateTime.Now;
 
             _context.Notes.Add(newNote);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetNoteById), new { id = newNote.Id }, newNote);
         }
 
-        // PUT: api/Task/{id}
+        // PUT: api/Note/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateNote(int id, string newText)
+        public async Task<IActionResult> UpdateNote(int id, [FromBody] JsonElement body, [FromServices] MainService mainService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -67,11 +70,44 @@ namespace Order.Controllers.EntitiesControllers
             if (note == null)
                 return NotFound();
 
-            note.Text = newText;
-            note.LastEdited = DateTime.Now;
+            try
+            {
+                // Преобразуем JSON в DTO
+                var updatedNote = JsonSerializer.Deserialize<NoteDto>(body, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
-            _context.Notes.Update(note);
-            await _context.SaveChangesAsync();
+                if (updatedNote == null)
+                    return BadRequest("Invalid JSON format.");
+
+                var jsonString = body.ToString();
+                var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+
+                // Устанавливаем значения null для соответствующих полей
+                mainService.SetNullFields(note, jsonDict);
+
+                // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
+
+                if (updatedNote.UserId == null)
+                {
+                    updatedNote.UserId = note.UserId;
+                }
+
+                updatedNote.LastEdited = DateTime.Now;
+
+                _mapper.Map(updatedNote, note);
+
+                // Валидация
+                mainService.ValidateEntityForNotNullConstraints(note);
+
+                _context.Notes.Update(note);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
             return NoContent();
         }
 

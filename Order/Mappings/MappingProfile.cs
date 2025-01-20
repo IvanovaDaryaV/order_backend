@@ -21,6 +21,7 @@ namespace Order.Mappings
             
             CreateMap<TaskDto, Models.Task>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<ContextDto, Context>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<NoteDto, Note>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
         }
     }
