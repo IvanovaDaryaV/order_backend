@@ -57,6 +57,37 @@ public class MainService
         }
         await _context.SaveChangesAsync();
     }
+    // Метод для отвязывания заметок от проекта
+    public async System.Threading.Tasks.Task UnassignNotesFromProject(int? projectId)
+    {
+        var notes = await _context.Notes.Where(n => n.ProjectId == projectId).ToListAsync();
+        foreach (var note in notes)
+        {
+            note.ProjectId = null;
+            _context.Entry(note).State = EntityState.Modified;
+        }
+        await _context.SaveChangesAsync();
+    }
+
+    // Метод для привязки заметок к проекту
+    public async System.Threading.Tasks.Task AssignNotesToProject(int? projectId, List<int> taskIds)
+    {
+        var notes = await _context.Notes.Where(t => taskIds.Contains(t.Id)).ToListAsync(); // ??? почему поле taskIds 
+        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+
+        if (project == null)
+        {
+            throw new ArgumentException("Project not found");
+        }
+
+
+        foreach (var note in notes)
+        {
+            note.ProjectId = projectId;
+            _context.Entry(note).State = EntityState.Modified;
+        }
+        await _context.SaveChangesAsync();
+    }
 
     // Метод для отвязывания задач от события
     public async System.Threading.Tasks.Task UnassignTasksFromEvent(int eventId)

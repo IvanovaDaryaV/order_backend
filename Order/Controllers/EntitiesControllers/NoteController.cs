@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     public class NoteController : Controller
     {
@@ -32,6 +32,7 @@ namespace Order.Controllers.EntitiesControllers
 
             var inboxNotes = await _context.Notes
                 .Where(note => note.UserId == user.Id)
+                .Where(note => note.Tag == "Inbox")
                 .ToListAsync();
 
             return Ok(inboxNotes);
@@ -53,6 +54,12 @@ namespace Order.Controllers.EntitiesControllers
         {
             newNote.DateCreated = DateTime.Now;
             newNote.LastEdited = DateTime.Now;
+
+            // Заметка не может иметь привязку к проекту, если она привязана к какому-то из разделов
+            if (newNote.Tag != null && newNote.ProjectId != null)
+            {
+                return BadRequest("Конфликт: заметка не может одновременно принадлежать к разделу и быть привязана к проекту. Заметка не была создана.");
+            }
 
             _context.Notes.Add(newNote);
             await _context.SaveChangesAsync();
@@ -84,17 +91,48 @@ namespace Order.Controllers.EntitiesControllers
                 var jsonString = body.ToString();
                 var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
 
-                // Устанавливаем значения null для соответствующих полей
-                mainService.SetNullFields(note, jsonDict);
-
                 // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 
                 if (updatedNote.UserId == null)
                 {
                     updatedNote.UserId = note.UserId;
                 }
+                if (updatedNote.ProjectId == null)
+                {
+                    updatedNote.ProjectId = note.ProjectId;
+                }
 
+                // Устанавливаем значения null для соответствующих полей
+                mainService.SetNullFields(note, jsonDict);
+
+                
                 updatedNote.LastEdited = DateTime.Now;
+
+                // Если при изменении заметки было передано значение для projectId
+                // не рассматривается ситуация, когда поле projectId = null, 
+                // потому что отвязать заметку от проекта нельзя, можно только удалить на совсем
+                if (jsonDict.ContainsKey("projectId"))
+                {
+                    if (jsonDict["projectId"] != null)
+                    {
+                        // обновление списка заметок, которые принадлежат к указанному проекту
+                        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == updatedNote.ProjectId);
+                        if (project == null)
+                        {
+                            return BadRequest("Проект не существует");
+                        }
+                        else
+                        {
+                            // Очистка поля tag
+                            if (jsonDict.ContainsKey("tag") && jsonDict["tag"] != null)
+                            {
+                                note.Tag = null;
+                            }
+
+                            project.NoteIds.Add(note.Id);
+                        }
+                    }
+                }
 
                 _mapper.Map(updatedNote, note);
 

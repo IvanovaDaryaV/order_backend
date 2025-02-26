@@ -21,6 +21,7 @@ namespace Order.Controllers
         }
 
         // получение новостей с сайта, результат - список строк дата+название события
+        // добавить кластеризацию по темам
         [HttpGet]
         public async Task<IActionResult> GetEvents()
         {

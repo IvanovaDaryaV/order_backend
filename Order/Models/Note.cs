@@ -21,8 +21,19 @@ namespace Order.Models
         [Column(TypeName = "timestamp without time zone")]
         public DateTime? LastEdited { get; set; }
 
+        // поле для перевода в раздел someday-maybe / next actions / waiting for
+        // может принимать значения 
+        public string? Tag { get; set; }
+        public bool? IsDone { get; set; } // если заметка как задача, она может быть выполнена
+
+        // заметка может быть привязана к проекту
+        public int? ProjectId { get; set; }
+        [ForeignKey("ProjectId")]
+        public Project? Project { get; set; }
+
         [ForeignKey("UserId")]
         [JsonIgnore]
         public User? User { get; set; }
+
     }
 }

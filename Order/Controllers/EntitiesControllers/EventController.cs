@@ -78,6 +78,13 @@ namespace Order.Controllers.EntitiesControllers
                 var jsonString = body.ToString();
                 var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
 
+                // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
+
+                if (updatedEvent.UserId == null)
+                {
+                    updatedEvent.UserId = evt.UserId;
+                }
+
                 // Устанавливаем значения null для соответствующих полей
                 mainService.SetNullFields(evt, jsonDict);
 
@@ -134,14 +141,6 @@ namespace Order.Controllers.EntitiesControllers
                 {
                     var taskIds = evt.Tasks.Select(t => t.Id).ToList();
                     updatedEvent.TaskIds = taskIds;
-                }
-
-
-                // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
-
-                if (updatedEvent.UserId == null)
-                {
-                    updatedEvent.UserId = evt.UserId;
                 }
 
                 _mapper.Map(updatedEvent, evt);

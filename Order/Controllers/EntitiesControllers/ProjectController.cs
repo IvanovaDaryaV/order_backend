@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Order.Controllers.EntitiesControllers
 {
     [ApiController]
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     public class ProjectController : Controller
     {
@@ -40,7 +40,7 @@ namespace Order.Controllers.EntitiesControllers
         }
 
         // GET: api/Project/{userId}
-        // Получить все проекты + их ЗАДАЧИ и СОБЫТИЯ у пользователя
+        // Получить все проекты + их ЗАДАЧИ, ЗАМЕТКИ и СОБЫТИЯ у пользователя
 
         // Для отрисовки вкладки с проектами
         [HttpGet("{userId:Guid}")]
@@ -50,6 +50,7 @@ namespace Order.Controllers.EntitiesControllers
                     .Where(project => project.UserId == userId)
                     .Include(project => project.Tasks)
                     .Include(project => project.Events)
+                    .Include(project => project.Notes)
                     .ToListAsync();
 
             if (!projects.Any())
@@ -78,7 +79,7 @@ namespace Order.Controllers.EntitiesControllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var project = await _context.Projects.Include(p => p.Tasks).FirstOrDefaultAsync(p => p.Id == id);
+            var project = await _context.Projects.Include(p => p.Tasks).Include(p => p.Notes).FirstOrDefaultAsync(p => p.Id == id);
             if (project == null)
             {
                 return NotFound();
@@ -107,7 +108,7 @@ namespace Order.Controllers.EntitiesControllers
                 }
 
 
-                // Проверка: было ли передано новое значение TaskIds
+                // Проверка: было ли передано новое значение TaskIds ----------------------------
                 if (jsonDict.ContainsKey("taskIds"))
                 {
                     // Значение было передано и оно не null
@@ -160,6 +161,61 @@ namespace Order.Controllers.EntitiesControllers
                 {
                     var taskIds = project.Tasks.Select(t => t.Id).ToList();
                     updatedProject.TaskIds = taskIds;
+                }
+
+                // Проверка: было ли передано новое значение NoteIds ----------------------------
+                if (jsonDict.ContainsKey("noteIds"))
+                {
+                    // Значение было передано и оно не null
+                    if (jsonDict["noteIds"] != null)
+                    {
+                        var notesToUpdate = await _context.Notes
+                            .Where(t => updatedProject.NoteIds.Contains(t.Id))
+                            .ToListAsync();
+
+                        // Если количество найденных заметок не совпадает с количеством переданных id
+                        if (notesToUpdate.Count != updatedProject.NoteIds.Count)
+                        {
+                            return BadRequest("Некоторые из переданных заметок не найдены.  Изменения не были применены.");
+                        }
+                        else
+                        {
+                            // Конфликт возникает, если у заметки из списка уже есть проект, к которому она привязана,
+                            // и этот проект не текущий, а другой.
+                            // Если заметка уже привязана к этому проекту, конфликта не будет
+                            // Например, чтобы дополнить список, не нужно переприсваивать значения заново
+                            bool conflict = false;
+                            foreach (var note in notesToUpdate)
+                            {
+                                if (note.ProjectId != null && note.ProjectId != id)
+                                    conflict = true;
+                            }
+
+                            if (!conflict)
+                            {
+                                await mainService.UnassignNotesFromProject(id);
+                                foreach (var note in notesToUpdate)
+                                {
+                                    await mainService.AssignNotesToProject(id, updatedProject.NoteIds); // почему не используется переменная note???
+                                }
+                            }
+                            else
+                            {
+                                return BadRequest("Конфликт: заметка(и) уже привязана к другому проекту.  Изменения не были применены.");
+                            }
+                        }
+                    }
+                    // Если передано значение null
+                    else
+                    {
+                        await mainService.UnassignNotesFromProject(id);
+                    }
+                }
+                // Если новых заметок не было - без изменений
+                else
+                {
+                    var notesIds = project.Notes.Select(t => t.Id).ToList();
+                    updatedProject.NoteIds = notesIds;
                 }
 
                 // Устанавливаем значения null для соответствующих полей
