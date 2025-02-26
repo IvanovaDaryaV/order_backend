@@ -139,10 +139,7 @@ namespace Order.Controllers.EntitiesControllers
                             if (!conflict)
                             {
                                 await mainService.UnassignTasksFromProject(id);
-                                foreach (var task in tasksToUpdate)
-                                {
-                                    await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
-                                }
+                                await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
                             }
                             else
                             {
@@ -194,10 +191,7 @@ namespace Order.Controllers.EntitiesControllers
                             if (!conflict)
                             {
                                 await mainService.UnassignNotesFromProject(id);
-                                foreach (var note in notesToUpdate)
-                                {
-                                    await mainService.AssignNotesToProject(id, updatedProject.NoteIds); // почему не используется переменная note???
-                                }
+                                await mainService.AssignNotesToProject(id, updatedProject.NoteIds);
                             }
                             else
                             {

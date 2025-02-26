@@ -70,9 +70,9 @@ public class MainService
     }
 
     // Метод для привязки заметок к проекту
-    public async System.Threading.Tasks.Task AssignNotesToProject(int? projectId, List<int> taskIds)
+    public async System.Threading.Tasks.Task AssignNotesToProject(int? projectId, List<int> noteIds)
     {
-        var notes = await _context.Notes.Where(t => taskIds.Contains(t.Id)).ToListAsync(); // ??? почему поле taskIds 
+        var notes = await _context.Notes.Where(t => noteIds.Contains(t.Id)).ToListAsync(); // получаем заметки, которые есть в переданном списке
         var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
 
         if (project == null)

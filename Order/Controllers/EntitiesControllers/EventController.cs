@@ -118,10 +118,7 @@ namespace Order.Controllers.EntitiesControllers
                             if (!conflict)
                             {
                                 await mainService.UnassignTasksFromEvent(id);
-                                foreach (var task in tasksToUpdate)
-                                {
-                                    await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
-                                }
+                                await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
                             }
                             else
                             {
