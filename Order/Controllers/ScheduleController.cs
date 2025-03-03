@@ -8,11 +8,12 @@ using Order.Models.DTO;
 using Ical.Net;
 using Order;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore.Query;
 
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+//[Authorize]
 public class ScheduleController : ControllerBase
 {
     private readonly ScheduleFetcherService _modeusService;
@@ -24,8 +25,21 @@ public class ScheduleController : ControllerBase
         _context = context;
     }
 
+    // Метод для проверки ресурса файла .ics
+    static string CheckCalendarSource(Ical.Net.Calendar calendar)
+    {
+        string originalModeusProductId = "-//Custis/Modeus//Schedule Calendar App//RU";
+        string prodId = calendar.ProductId;
+
+        if (prodId == originalModeusProductId)
+        {
+            return "modeus";
+        }
+        return "personal";
+    }
+
     [HttpPost("upload-ics")]
-    public async Task<IActionResult> UploadICS(IFormFile file, Guid userId, string type)
+    public async Task<IActionResult> UploadICS(IFormFile file, Guid userId)
     {
         if (file == null || file.Length == 0)
         {
@@ -58,7 +72,8 @@ public class ScheduleController : ControllerBase
             evt.PeriodStart = component.DtStart.AsDateTimeOffset.DateTime;
             evt.PeriodEnd = component.DtEnd.AsDateTimeOffset.DateTime;
             evt.UserId = userId;
-            evt.Type = type;
+
+            evt.Type = CheckCalendarSource(calendar);
 
             if (evt.PeriodEnd > DateTime.Today) evt.Status = false;
             else evt.Status = true;

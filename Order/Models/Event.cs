@@ -14,7 +14,8 @@ namespace Order.Models
         [Required]
         public string Name { get; set; }
         [Required]
-        public bool Status { get; set; }
+        public bool Status { get; set; }    // дата события уже прошла или нет
+        public bool? WasAttended { get; set; } // было ли событие посещено пользователем
         public int? Priority { get; set; }
         [Column(TypeName = "timestamp without time zone")]
         public DateTime? PeriodStart { get; set; }

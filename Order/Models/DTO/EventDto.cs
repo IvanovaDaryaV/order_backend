@@ -8,6 +8,7 @@ namespace Order.Models.DTO
     {
         public string? Name { get; set; }
         public bool? Status { get; set; }
+        public bool? WasAttended { get; set; } // было ли событие посещено пользователем
         public int? Priority { get; set; }
         [Column(TypeName = "timestamp without time zone")]
         public DateTime? PeriodStart { get; set; }
