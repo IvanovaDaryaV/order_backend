@@ -5,7 +5,7 @@ Order
   - **EntitiesControllers** - Контроллеры с CRUD для основных сущностей (Task, Event, Project)
   - Контроллер с CRUD для **пользователя** и получение задач и ивентов для календаря для пользователя
   - **ParserController** - добавление событий из вкладки "ТюмГУ полезное"
-  - **ScheduleController** - загрузка файла .ics
+  - **FileImportController** - загрузка файлов .ics из modeus и из лмс
   - **ShareController** - создание ссылки на расписание, проверка запроса
 - **Mappings** - настройка маппинга полей для Task, Event, Project
 - **Models**
