@@ -63,7 +63,6 @@ namespace Order.Services
             {
                 Console.WriteLine("События не найдены на странице.");
             }
-            //await ClusterEvents(events);
             Console.WriteLine(events);
             return events;
         }

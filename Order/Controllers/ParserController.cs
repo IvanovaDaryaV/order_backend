@@ -27,13 +27,6 @@ namespace Order.Controllers
         {
             var url = "https://www.utmn.ru/news/events/";
             var events = await _eventParser.GetEventsAsync(url);
-            _eventParser.ClusterEvents(events);
-
-            //foreach (var ev in events)
-            //{
-            //    Console.WriteLine(ev);
-            //}
-
             return Ok(events);
         }
 
