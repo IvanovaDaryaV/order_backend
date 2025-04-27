@@ -81,10 +81,10 @@ namespace Order.Controllers
                                     ))
                                     .ToList();
 
-            var filteredEvents = user.Events?
-                .Where(evt => evt.PeriodStart >= startDateTime && evt.PeriodStart <= endDateTime &&
-                                evt.PeriodEnd >= startDateTime && evt.PeriodEnd <= endDateTime)
-                .ToList();
+            //var filteredEvents = user.Events?
+            //    .Where(evt => evt.PeriodStart >= startDateTime && evt.PeriodStart <= endDateTime &&
+            //                    evt.PeriodEnd >= startDateTime && evt.PeriodEnd <= endDateTime)
+            //    .ToList();
 
             if (user.Tasks == null || user.Events == null)
                 return StatusCode(500, "Tasks or Events are null even after loading.");
@@ -122,7 +122,7 @@ namespace Order.Controllers
             {
                 user.Id,
                 Tasks = filteredTasks,
-                Events = filteredEvents,
+                Events = user.Events,
                 Contexts = contextDtos
             });
         }
