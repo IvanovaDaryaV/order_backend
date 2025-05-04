@@ -27,15 +27,20 @@ namespace Order.Controllers.EntitiesControllers
         [HttpGet("inbox/{userId:Guid}")]
         public async Task<IActionResult> GetInbox(Guid userId)
         {
+            var allowedTags = new[] { "inbox", "delegated" };
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound();
 
             var inboxNotes = await _context.Notes
                 .Where(note => note.UserId == user.Id)
-                .Where(note => note.Tag == "Inbox")
+                .Where(note => allowedTags.Contains(note.Tag))
+                .Where(note => note.ProjectId == null)
+                .AsNoTracking() 
                 .ToListAsync();
 
+
             return Ok(inboxNotes);
+
         }
 
         // GET: api/Note/{id}
