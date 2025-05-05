@@ -49,7 +49,8 @@ namespace Order
             modelBuilder.Entity<ProjectUser>()
                 .HasOne(pu => pu.Project)
                 .WithMany(p => p.ProjectUsers)
-                .HasForeignKey(pu => pu.ProjectId);
+                .HasForeignKey(pu => pu.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ProjectUser>()
                 .HasOne(pu => pu.User)
