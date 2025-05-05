@@ -47,7 +47,9 @@ namespace Order.Controllers.EntitiesControllers
         public async Task<IActionResult> GetProjectByUserId(Guid userId)
         {
             var projects = await _context.Projects
-                    .Where(project => project.UserId == userId)
+                    //.Where(up => up.UserId == userId)
+                    //.Select(up => up.Project)
+                    .Where(p => p.ProjectUsers.Any(pu => pu.UserId == userId))
                     .Include(project => project.Tasks)
                     .Include(project => project.Events)
                     .Include(project => project.Notes)
@@ -67,8 +69,19 @@ namespace Order.Controllers.EntitiesControllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            newProject.ProjectUsers = new List<ProjectUser>
+            {
+                new ProjectUser
+                {
+                    UserId = newProject.UserId,
+                    ProjectId = newProject.Id,
+                }
+            };
+
             _context.Projects.Add(newProject);
             await _context.SaveChangesAsync();
+
             return CreatedAtAction(nameof(GetProjectById), new { id = newProject.Id }, newProject);
         }
 
@@ -100,11 +113,28 @@ namespace Order.Controllers.EntitiesControllers
                 var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
 
 
-                // Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
+                //Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
 
                 if (updatedProject.UserId == null)
                 {
                     updatedProject.UserId = project.UserId;
+                }
+                // Иначе, если было передано новое значение userId
+                else
+                {
+                    //project.UserId = null;
+                    //_context.Projects.Update(project);
+                    //await _context.SaveChangesAsync();
+                    // явное удаление записей из промежуточной таблицы
+                    var oldLinks = _context.ProjectUser
+                        .Where(pu => pu.ProjectId == project.Id);
+                    _context.ProjectUser.RemoveRange(oldLinks);
+
+                    project.ProjectUsers.Add(new ProjectUser
+                    {
+                        UserId = updatedProject.UserId.Value,
+                        ProjectId = project.Id
+                    });
                 }
 
 

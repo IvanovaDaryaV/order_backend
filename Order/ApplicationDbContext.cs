@@ -14,6 +14,7 @@ namespace Order
         public DbSet<Context> Contexts { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<Note> Notes { get; set; }
+        public DbSet<ProjectUser> ProjectUser { get; set; }
         public DbSet<ScheduleSharing> ScheduleSharings { get; set; }
         private readonly IConfiguration _configuration;
 
@@ -41,12 +42,20 @@ namespace Order
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            //===========================================================
+            modelBuilder.Entity<ProjectUser>()
+                .HasKey(pu => new { pu.ProjectId, pu.UserId });
 
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Projects)
-                .WithOne(p => p.User)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<ProjectUser>()
+                .HasOne(pu => pu.Project)
+                .WithMany(p => p.ProjectUsers)
+                .HasForeignKey(pu => pu.ProjectId);
 
+            modelBuilder.Entity<ProjectUser>()
+                .HasOne(pu => pu.User)
+                .WithMany(u => u.ProjectUsers)
+                .HasForeignKey(pu => pu.UserId);
+            //============================================================
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Events)
                 .WithOne(e => e.User)

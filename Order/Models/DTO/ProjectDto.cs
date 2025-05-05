@@ -11,16 +11,20 @@ namespace Order.Models.DTO
         public int? ContextId { get; set; }
         public DateOnly? HardDeadline { get; set; }
         public DateOnly? SoftDeadline { get; set; }
+        [Required]
+        public bool Status { get; set; }
+        //[Required]
+        public int? ProjectUserId { get; set; }
         public Guid? UserId { get; set; }
-        public bool? Status { get; set; }
 
-        [ForeignKey("UserId")]
-        public User? User { get; set; }
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
         public List<int>? NoteIds { get; set; } // Список привязанных заметок (по id)
         public List<string>? Links { get; set; } // Список ссылок (на материалы и тд)
         public ICollection<Event>? Events { get; set; } = new List<Event>();
+        public ICollection<Task>? Tasks { get; set; } = new List<Task>();
+        public ICollection<Note>? Notes { get; set; } = new List<Note>();
+        public List<ProjectUser>? ProjectUsers { get; set; } = new List<ProjectUser>(); // промежуточная таблица для связи с пользователями
     }
 }

@@ -21,12 +21,25 @@ namespace Order.Controllers
         }
 
         // получение новостей с сайта, результат - список строк дата+название события
-        // добавить кластеризацию по темам
+        // https://www.utmn.ru/news/events/
         [HttpGet]
-        public async Task<IActionResult> GetEvents()
+        public async Task<IActionResult> GetEventsTMNofficial(string url)
         {
-            var url = "https://www.utmn.ru/news/events/";
-            var events = await _eventParser.GetEventsAsync(url);
+            List<string> events = new List<string>();
+            switch (url)
+            {
+                case "https://www.utmn.ru/news/events/":    // общие новости
+                    {
+                        events = await _eventParser.GetEventsTMNofficial(url);
+                        break;
+                    }
+                case "https://www.utmn.ru/igip/":           // новости ИГИП
+                    {
+                        events = await _eventParser.GetEventsTMNigip(url);
+                        break;
+                    }
+            }
+            
             return Ok(events);
         }
 

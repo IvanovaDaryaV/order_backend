@@ -21,7 +21,8 @@ namespace Order.Services
             _httpClient = httpClient;
         }
 
-        public async Task<List<string>> GetEventsAsync(string url)
+        // Получение новостей с официального сайта https://www.utmn.ru/news/events/
+        public async Task<List<string>> GetEventsTMNofficial(string url)
         {
             // получение HTML страницы
             var response = await _httpClient.GetStringAsync(url);
@@ -64,6 +65,82 @@ namespace Order.Services
                 Console.WriteLine("События не найдены на странице.");
             }
             Console.WriteLine(events);
+            return events;
+        }
+
+        // Получение новостей ИГИП https://www.utmn.ru/igip/
+        public async Task<List<string>> GetEventsTMNigip(string url)
+        {
+            // получение HTML страницы
+            //var response = await _httpClient.GetStringAsync(url);
+
+            //// загрузка HTML в HtmlAgilityPack
+            //var htmlDoc = new HtmlDocument();
+            //htmlDoc.LoadHtml(response);
+            var events = new List<string>();
+
+            for (int page = 1; page <= 5; page++)
+            {
+                url = $"https://www.utmn.ru/igip/?PAGEN_1={page}";
+                var response = await _httpClient.GetAsync(url);
+                var pageHtml = await response.Content.ReadAsStringAsync();
+                var htmlDoc = new HtmlDocument();
+
+
+                events = new List<string>();
+
+                // XPath для поиска блоков с событиями
+                var eventNodes = htmlDoc.DocumentNode.SelectNodes("//div[contains(@class, 'news-item')]");
+                if (eventNodes != null)
+                {
+                    foreach (var eventNode in eventNodes)
+                    {
+                        var textNode = eventNode.SelectSingleNode(".//div[contains(@class, 'news-item_text')]");
+                        if (textNode == null) continue;
+
+                        var dateNode = textNode.SelectSingleNode(".//span[contains(@class, 'news-item__date')]");
+                        var titleNode = textNode.SelectSingleNode(".//h4");
+
+                        var date = dateNode?.InnerText.Trim();
+                        var title = titleNode?.InnerText.Trim();
+
+                        if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
+                        {
+                            events.Add($"{date}: {title}");
+                        }
+
+
+                        //var dateNode = eventNode.SelectSingleNode(".//div[@class='news-item_info']");
+                        //string date = null;
+
+                        //if (dateNode != null)
+                        //{
+                        //    //var day = dateNode.SelectSingleNode(".//div[@class='day']")?.InnerText.Trim();
+                        //    //var month = dateNode.SelectSingleNode(".//div[@class='month']")?.InnerText.Trim();
+                        //    //var year = dateNode.SelectSingleNode(".//div[@class='year']")?.InnerText.Trim();
+                        //    //date = $"{day} {month} {year}";
+                        //    date = dateNode.SelectSingleNode(".//div[@class='news-item__date']")?.InnerText.Trim();
+                        //}
+
+                        //var titleNode = eventNode.SelectSingleNode(".//div[h4]/a");
+                        //var title = titleNode?.InnerText.Trim();
+
+                        // формирование строку с результатом
+                        //if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
+                        //{
+                        //    events.Add($"{date}: {title}");
+                        //}
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("События не найдены на странице.");
+                }
+                foreach (var ev in events)
+                {
+                    Console.WriteLine(ev);
+                }
+            }
             return events;
         }
     }

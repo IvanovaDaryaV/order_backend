@@ -6,8 +6,6 @@ namespace Order.Models
 {
     public class Project
     {
-        //internal readonly object Tasks;
-
         [Key]
         [Required]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -18,12 +16,11 @@ namespace Order.Models
         public DateOnly? HardDeadline { get; set; }
         public DateOnly? SoftDeadline { get; set; }
         [Required]
-        public Guid UserId { get; set; }
-        [Required]
         public bool Status { get; set; }
+        //[Required]
+        public int? ProjectUserId { get; set; }
+        public Guid? UserId { get; set; }
 
-        [ForeignKey("UserId")]
-        public User? User { get; set; } 
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
         public List<int>? TaskIds { get; set; } // Список привязанных задач (по id)
@@ -32,5 +29,7 @@ namespace Order.Models
         public ICollection<Event>? Events { get; set; } = new List<Event>();
         public ICollection<Task>? Tasks { get; set; } = new List<Task>();
         public ICollection<Note>? Notes { get; set; } = new List<Note>();
+        public List<ProjectUser>? ProjectUsers { get; set; } = new List<ProjectUser>(); // промежуточная таблица для связи с пользователями
+        public List<User>? Users { get; set; } = new List<User>();
     }
 }
