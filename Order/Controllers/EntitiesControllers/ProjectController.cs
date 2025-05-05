@@ -132,7 +132,7 @@ namespace Order.Controllers.EntitiesControllers
 
                     project.ProjectUsers.Add(new ProjectUser
                     {
-                        UserId = updatedProject.UserId.Value,
+                        UserId = updatedProject.UserId,
                         ProjectId = project.Id
                     });
                 }

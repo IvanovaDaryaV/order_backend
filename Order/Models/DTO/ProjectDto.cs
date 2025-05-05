@@ -15,7 +15,7 @@ namespace Order.Models.DTO
         public bool Status { get; set; }
         //[Required]
         public int? ProjectUserId { get; set; }
-        public Guid? UserId { get; set; }
+        public Guid UserId { get; set; }
 
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
