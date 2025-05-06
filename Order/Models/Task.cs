@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Order.Models
 {
+    [Table("tasks")]
     public class Task
     {
         [Key]

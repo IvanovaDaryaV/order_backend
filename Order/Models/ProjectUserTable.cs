@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace Order.Models
 {
     // Промежуточная таблица для связи многие ко многим между пользователем и проектами
-    [Table("ProjectUserTable")]
+    [Table("projects_users")]
     public class ProjectUser
     {
         //[Key]

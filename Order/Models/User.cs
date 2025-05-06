@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Order.Models
 {
+    [Table("users")]
     public class User : IdentityUser<Guid>
     {
         public User()

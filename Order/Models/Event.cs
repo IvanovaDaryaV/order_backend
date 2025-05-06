@@ -5,6 +5,7 @@ using AutoMapper;
 
 namespace Order.Models
 {
+    [Table("events")]
     public class Event
     {
         [Key]

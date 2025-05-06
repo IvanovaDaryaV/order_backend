@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Order.Models
 {
+    [Table("notes")]
     public class Note
     {
         [Key]

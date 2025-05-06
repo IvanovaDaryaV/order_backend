@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Order.Models
 {
+    [Table("contexts")]
     public class Context
     {
         [Key]

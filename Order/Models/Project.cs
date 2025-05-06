@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Order.Models
 {
+    [Table("projects")]
     public class Project
     {
         [Key]

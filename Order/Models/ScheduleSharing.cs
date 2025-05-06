@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Order.Models
 {
+    [Table("schedule_sharing")]
     public class ScheduleSharing
     {
         [Key]
