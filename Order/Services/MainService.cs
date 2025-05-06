@@ -19,10 +19,12 @@ public class MainService
         var tasks = await _context.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
         foreach (var task in tasks)
         {
+            Console.WriteLine(task.Id);
             task.ProjectId = null;
             _context.Entry(task).State = EntityState.Modified;
         }
         await _context.SaveChangesAsync();
+        Console.WriteLine("ЗАДАЧИ УСПЕШНО ОТВЯЗАНЫ ОТ ПРОЕКТА");
     }
 
     // Метод для привязки задач к проекту
@@ -40,7 +42,7 @@ public class MainService
         foreach (var task in tasks)
         {
             task.ProjectId = projectId;
-
+            Console.WriteLine(task.Id);
             // Логика наследования контекста:
             // если проект имеет контекст, задачи его наследует
             // если нет, у задач будет свой собственный, либо null
@@ -53,9 +55,12 @@ public class MainService
                 task.ContextId = project.ContextId;
             }
 
-            _context.Entry(task).State = EntityState.Modified;
+            //_context.Entry(task).State = EntityState.Modified;
+            _context.Tasks.Update(task);
         }
-        await _context.SaveChangesAsync();
+        var result = await _context.SaveChangesAsync();
+        Console.WriteLine($"Modified: {result}");
+        Console.WriteLine("ЗАДАЧИ УСПЕШНО ПРИВЯЗАНЫ К ПРОЕКТУ");
     }
     // Метод для отвязывания заметок от проекта
     public async System.Threading.Tasks.Task UnassignNotesFromProject(int? projectId)

@@ -9,19 +9,21 @@ namespace Order.Models
     [Table("ProjectUserTable")]
     public class ProjectUser
     {
+        //[Key]
+        //[Required]
+        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        //public int Id { get; set; }
+        [Required]
         [Key]
-        [Required]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
-        [Required]
         [Column(TypeName = "uuid")]
-        public Guid? UserId { get; set; }
+        public Guid UserId { get; set; }
         [Required]
-        public int? ProjectId { get; set; }
+        [Key]
+        public int ProjectId { get; set; }
         [ForeignKey("UserId")]
         [JsonIgnore]
-        public User? User { get; set; }
+        public User User { get; set; }
         [ForeignKey("ProjectId")]
-        public Project? Project { get; set; }
+        public Project Project { get; set; }
     }
 }

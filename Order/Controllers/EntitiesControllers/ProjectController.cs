@@ -57,7 +57,7 @@ namespace Order.Controllers.EntitiesControllers
 
             if (!projects.Any())
             {
-                return NotFound();
+                return NotFound("Для данного userId не найдены привязанные к нему проекты");
             }
 
             return Ok(projects);
@@ -65,7 +65,7 @@ namespace Order.Controllers.EntitiesControllers
 
         // POST: api/Project
         [HttpPost]
-        public async Task<IActionResult> CreateProject([FromBody] Project newProject)
+        public async Task<IActionResult> CreateProject([FromBody] Project newProject, Guid userId)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -74,7 +74,7 @@ namespace Order.Controllers.EntitiesControllers
             {
                 new ProjectUser
                 {
-                    UserId = newProject.UserId,
+                    UserId = userId,
                     ProjectId = newProject.Id,
                 }
             };
@@ -83,6 +83,49 @@ namespace Order.Controllers.EntitiesControllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetProjectById), new { id = newProject.Id }, newProject);
+        }
+
+        [HttpPost("{projectId:int}/users")]
+        public async Task<IActionResult> AddUsersToProject(int projectId, [FromBody] Guid[] userIds)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+
+            foreach (var userId in userIds)
+            {
+                var exists = await _context.ProjectUser
+                    .AnyAsync(p => p.ProjectId == projectId && p.UserId == userId);
+
+                if (!exists)
+                {
+                    _context.ProjectUser.Add(new ProjectUser
+                    {
+                        ProjectId = projectId,
+                        UserId = userId
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpDelete("{projectId:int}/users")]
+        public async Task<IActionResult> RemoveUsersFromProject(int projectId, [FromBody] Guid[] userIds)
+        {
+
+            var recordsToDelete = await _context.ProjectUser
+                .Where(p => p.ProjectId == projectId && userIds.Contains(p.UserId))
+                .ToListAsync();
+
+            if (!recordsToDelete.Any())
+                return NotFound("Для указанного проекта не найдено пользователей");
+
+            _context.ProjectUser.RemoveRange(recordsToDelete);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
         // PUT: api/Project/{id}
@@ -113,37 +156,14 @@ namespace Order.Controllers.EntitiesControllers
                 var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
 
 
-                //Чтобы не нарушать связь, если userId не изменяется, просто берем то значение, которое уже есть
-
-                if (updatedProject.UserId == null)
-                {
-                    updatedProject.UserId = project.UserId;
-                }
-                // Иначе, если было передано новое значение userId
-                else
-                {
-                    //project.UserId = null;
-                    //_context.Projects.Update(project);
-                    //await _context.SaveChangesAsync();
-                    // явное удаление записей из промежуточной таблицы
-                    var oldLinks = _context.ProjectUser
-                        .Where(pu => pu.ProjectId == project.Id);
-                    _context.ProjectUser.RemoveRange(oldLinks);
-
-                    project.ProjectUsers.Add(new ProjectUser
-                    {
-                        UserId = updatedProject.UserId,
-                        ProjectId = project.Id
-                    });
-                }
-
-
                 // Проверка: было ли передано новое значение TaskIds ----------------------------
                 if (jsonDict.ContainsKey("taskIds"))
                 {
+                    Console.WriteLine("ПОЛУЧЕН СПИСОК ЗАДАЧ");
                     // Значение было передано и оно не null
                     if (jsonDict["taskIds"] != null)
                     {
+                        Console.WriteLine("СПИСОК ЗАДАЧ НЕПУСТОЙ");
                         var tasksToUpdate = await _context.Tasks
                             .Where(t => updatedProject.TaskIds.Contains(t.Id))
                             .ToListAsync();
@@ -168,8 +188,12 @@ namespace Order.Controllers.EntitiesControllers
 
                             if (!conflict)
                             {
+                                Console.WriteLine("КОНФЛИКТА НЕТ, ПЕРЕПРИВЯЗЫВАЕМ ЗАДАЧИ");
                                 await mainService.UnassignTasksFromProject(id);
                                 await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
+
+                                // Обновим связанные задачи вручную, чтобы они не были перезаписаны
+                                project.Tasks = await _context.Tasks.Where(t => t.ProjectId == id).ToListAsync();
                             }
                             else
                             {

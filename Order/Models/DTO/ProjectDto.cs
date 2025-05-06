@@ -13,9 +13,6 @@ namespace Order.Models.DTO
         public DateOnly? SoftDeadline { get; set; }
         [Required]
         public bool Status { get; set; }
-        //[Required]
-        public int? ProjectUserId { get; set; }
-        public Guid UserId { get; set; }
 
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }

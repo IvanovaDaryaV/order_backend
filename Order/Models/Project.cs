@@ -17,9 +17,7 @@ namespace Order.Models
         public DateOnly? SoftDeadline { get; set; }
         [Required]
         public bool Status { get; set; }
-        //[Required]
-        public int? ProjectUserId { get; set; }
-        public Guid UserId { get; set; }
+        public Guid? OwnerId { get; set; } // id пользователя, который создал проект первым
 
         [ForeignKey("ContextId")]
         public Context? Context { get; set; }
@@ -30,6 +28,6 @@ namespace Order.Models
         public ICollection<Task>? Tasks { get; set; } = new List<Task>();
         public ICollection<Note>? Notes { get; set; } = new List<Note>();
         public List<ProjectUser>? ProjectUsers { get; set; } = new List<ProjectUser>(); // промежуточная таблица для связи с пользователями
-        public List<User>? Users { get; set; } = new List<User>();
+
     }
 }
