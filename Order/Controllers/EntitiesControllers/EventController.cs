@@ -30,7 +30,7 @@ namespace Order.Controllers.EntitiesControllers
         {
             var evt = await _context.Events.FindAsync(id);
             var tasks = _context.Tasks
-                        .Where(task => evt.TaskIds.Contains(task.Id))
+                        .Where(task => evt.TaskIds.Contains(task.TaskId))
                         .ToList();
             if (evt == null)
                 return NotFound();
@@ -50,7 +50,7 @@ namespace Order.Controllers.EntitiesControllers
 
             _context.Events.Add(newEvent);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetEventById), new { id = newEvent.Id }, newEvent);
+            return CreatedAtAction(nameof(GetEventById), new { id = newEvent.EventId }, newEvent);
         }
 
         // PUT: api/Event/{id}
@@ -60,7 +60,7 @@ namespace Order.Controllers.EntitiesControllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var evt = await _context.Events.Include(e => e.Tasks).FirstOrDefaultAsync(e => e.Id == id);
+            var evt = await _context.Events.Include(e => e.Tasks).FirstOrDefaultAsync(e => e.EventId == id);
             if (evt == null)
                 return NotFound();
 
@@ -95,7 +95,7 @@ namespace Order.Controllers.EntitiesControllers
                     if (jsonDict["taskIds"] != null)
                     {
                         var tasksToUpdate = await _context.Tasks
-                            .Where(t => updatedEvent.TaskIds.Contains(t.Id))
+                            .Where(t => updatedEvent.TaskIds.Contains(t.TaskId))
                             .ToListAsync();
 
                         // Если количество найденных задач не совпадает с количеством переданных id
@@ -136,7 +136,7 @@ namespace Order.Controllers.EntitiesControllers
                 // Если новых задач не было - без изменений
                 else
                 {
-                    var taskIds = evt.Tasks.Select(t => t.Id).ToList();
+                    var taskIds = evt.Tasks.Select(t => t.TaskId).ToList();
                     updatedEvent.TaskIds = taskIds;
                 }
 

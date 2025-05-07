@@ -33,10 +33,11 @@ namespace Order
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured && _configuration != null)
-            {
-                optionsBuilder.UseNpgsql(_configuration.GetConnectionString("DefaultConnection"));
-            }
+            //if (!optionsBuilder.IsConfigured && _configuration != null)
+            //{
+                optionsBuilder.UseNpgsql(_configuration.GetConnectionString("DefaultConnection"))
+                    .UseSnakeCaseNamingConvention();
+            //}
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

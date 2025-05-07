@@ -39,7 +39,7 @@ public class UserController : ControllerBase
     {
         var newUser = new User
         {
-            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
             Name = model.Name,
             Email = model.Email
         };
@@ -49,7 +49,7 @@ public class UserController : ControllerBase
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser);
+        return CreatedAtAction(nameof(GetUserById), new { userId = newUser.UserId }, newUser);
     }
 
     [HttpPost("login")]
@@ -96,7 +96,7 @@ public class UserController : ControllerBase
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Email, user.Email)
         };

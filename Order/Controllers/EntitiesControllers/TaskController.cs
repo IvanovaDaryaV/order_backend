@@ -41,7 +41,7 @@ namespace Order.Controllers.EntitiesControllers
             var user = await _context.Users
                 .Include(u => u.Tasks)
                 //.Include(u => u.Projects)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .FirstOrDefaultAsync(u => u.UserId == userId);
             if (user == null)
                 return NotFound();
 
@@ -58,7 +58,7 @@ namespace Order.Controllers.EntitiesControllers
                 .ToList();
 
             var contexts = await _context.Contexts
-                .Where(c => contextIds.Contains(c.Id))
+                .Where(c => contextIds.Contains(c.ContextId))
                 .ToListAsync();
 
             var result = new Dictionary<string, List<object>>();
@@ -67,7 +67,7 @@ namespace Order.Controllers.EntitiesControllers
             {
                 // Для каждого контекста ищем задачи и проекты, связанные с этим контекстом
                 var contextTasks = tasks
-                    .Where(task => task.ContextId == context.Id)
+                    .Where(task => task.ContextId == context.ContextId)
                     .Select(task => new { task.Name, task.Project })
                     .ToList();
 
@@ -89,7 +89,7 @@ namespace Order.Controllers.EntitiesControllers
 
             _context.Tasks.Add(newTask);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetTaskById), new { id = newTask.Id }, newTask);
+            return CreatedAtAction(nameof(GetTaskById), new { id = newTask.TaskId }, newTask);
         }
 
         // PUT: api/Task/{id}
@@ -135,7 +135,7 @@ namespace Order.Controllers.EntitiesControllers
                 {
                     if (jsonDict["projectId"] != null)
                     {
-                        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == updatedTask.ProjectId);
+                        var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == updatedTask.ProjectId);
                         // обновление списка задач, которые принадлежат к указанному проекту
                         if (project == null)
                             return BadRequest("Проект не существует");
@@ -149,7 +149,7 @@ namespace Order.Controllers.EntitiesControllers
                 // Если при изменении задачи было передано значение для projectId
                 if (jsonDict.ContainsKey("eventId"))
                 {
-                    var evt = await _context.Events.FirstOrDefaultAsync(p => p.Id == updatedTask.EventId);
+                    var evt = await _context.Events.FirstOrDefaultAsync(p => p.EventId == updatedTask.EventId);
                     if (jsonDict["eventId"] != null)
                     {
                         // обновление списка задач, которые принадлежат к указанному проекту

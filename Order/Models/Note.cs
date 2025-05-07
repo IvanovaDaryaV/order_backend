@@ -10,7 +10,7 @@ namespace Order.Models
         [Key]
         [Required]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        public int NoteId { get; set; }
         [Required]
         public string Text { get; set; }
         [Required]

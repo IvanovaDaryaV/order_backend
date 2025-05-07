@@ -19,7 +19,7 @@ public class MainService
         var tasks = await _context.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
         foreach (var task in tasks)
         {
-            Console.WriteLine(task.Id);
+            Console.WriteLine(task.TaskId);
             task.ProjectId = null;
             _context.Entry(task).State = EntityState.Modified;
         }
@@ -30,8 +30,8 @@ public class MainService
     // Метод для привязки задач к проекту
     public async System.Threading.Tasks.Task AssignTasksToProject(int projectId, List<int> taskIds)
     {
-        var tasks = await _context.Tasks.Where(t => taskIds.Contains(t.Id)).ToListAsync();
-        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+        var tasks = await _context.Tasks.Where(t => taskIds.Contains(t.TaskId)).ToListAsync();
+        var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == projectId);
 
         if (project == null)
         {
@@ -42,7 +42,7 @@ public class MainService
         foreach (var task in tasks)
         {
             task.ProjectId = projectId;
-            Console.WriteLine(task.Id);
+            Console.WriteLine(task.TaskId);
             // Логика наследования контекста:
             // если проект имеет контекст, задачи его наследует
             // если нет, у задач будет свой собственный, либо null
@@ -77,8 +77,8 @@ public class MainService
     // Метод для привязки заметок к проекту
     public async System.Threading.Tasks.Task AssignNotesToProject(int? projectId, List<int> noteIds)
     {
-        var notes = await _context.Notes.Where(t => noteIds.Contains(t.Id)).ToListAsync(); // получаем заметки, которые есть в переданном списке
-        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+        var notes = await _context.Notes.Where(t => noteIds.Contains(t.NoteId)).ToListAsync(); // получаем заметки, которые есть в переданном списке
+        var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == projectId);
 
         if (project == null)
         {
@@ -109,7 +109,7 @@ public class MainService
     // Метод для привязки задач к событию
     public async System.Threading.Tasks.Task AssignTasksToEvent(int eventId, List<int> taskIds)
     {
-        var tasks = await _context.Tasks.Where(t => taskIds.Contains(t.Id)).ToListAsync();
+        var tasks = await _context.Tasks.Where(t => taskIds.Contains(t.TaskId)).ToListAsync();
 
         foreach (var task in tasks)
         {

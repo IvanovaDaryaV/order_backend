@@ -20,7 +20,7 @@ namespace Order.Models
         [Key]
         [Required]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
         [Required]
         public string Name { get; set; }
         [Required]

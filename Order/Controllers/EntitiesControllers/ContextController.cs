@@ -45,7 +45,7 @@ namespace Order.Controllers.EntitiesControllers
 
             _context.Contexts.Add(newContext);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetContextById), new { id = newContext.Id }, newContext);
+            return CreatedAtAction(nameof(GetContextById), new { id = newContext.ContextId }, newContext);
         }
 
         // PUT: api/Context/{id}

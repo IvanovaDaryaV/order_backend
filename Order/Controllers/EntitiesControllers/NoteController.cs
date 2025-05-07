@@ -32,7 +32,7 @@ namespace Order.Controllers.EntitiesControllers
             if (user == null) return NotFound();
 
             var inboxNotes = await _context.Notes
-                .Where(note => note.UserId == user.Id)
+                .Where(note => note.UserId == user.UserId)
                 .Where(note => allowedTags.Contains(note.Tag))
                 .Where(note => note.ProjectId == null)
                 .AsNoTracking() 
@@ -68,7 +68,7 @@ namespace Order.Controllers.EntitiesControllers
 
             _context.Notes.Add(newNote);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetNoteById), new { id = newNote.Id }, newNote);
+            return CreatedAtAction(nameof(GetNoteById), new { id = newNote.NoteId }, newNote);
         }
 
         // PUT: api/Note/{id}
@@ -121,7 +121,7 @@ namespace Order.Controllers.EntitiesControllers
                     if (jsonDict["projectId"] != null)
                     {
                         // обновление списка заметок, которые принадлежат к указанному проекту
-                        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == updatedNote.ProjectId);
+                        var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == updatedNote.ProjectId);
                         if (project == null)
                         {
                             return BadRequest("Проект не существует");
@@ -134,7 +134,7 @@ namespace Order.Controllers.EntitiesControllers
                                 note.Tag = null;
                             }
 
-                            project.NoteIds.Add(note.Id);
+                            project.NoteIds.Add(note.NoteId);
                         }
                     }
                 }

@@ -27,9 +27,9 @@ namespace Order.Controllers.EntitiesControllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProjectById(int id)
         {
-            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == id);
             var tasks = _context.Tasks
-                        .Where(task => project.TaskIds.Contains(task.Id))
+                        .Where(task => project.TaskIds.Contains(task.TaskId))
                         .ToList();
             if (project == null)
                 return NotFound();
@@ -75,14 +75,14 @@ namespace Order.Controllers.EntitiesControllers
                 new ProjectUser
                 {
                     UserId = userId,
-                    ProjectId = newProject.Id,
+                    ProjectId = newProject.ProjectId,
                 }
             };
 
             _context.Projects.Add(newProject);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetProjectById), new { id = newProject.Id }, newProject);
+            return CreatedAtAction(nameof(GetProjectById), new { id = newProject.ProjectId }, newProject);
         }
 
         [HttpPost("{projectId:int}/users")]
@@ -90,7 +90,7 @@ namespace Order.Controllers.EntitiesControllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == projectId);
 
             foreach (var userId in userIds)
             {
@@ -135,7 +135,7 @@ namespace Order.Controllers.EntitiesControllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var project = await _context.Projects.Include(p => p.Tasks).Include(p => p.Notes).FirstOrDefaultAsync(p => p.Id == id);
+            var project = await _context.Projects.Include(p => p.Tasks).Include(p => p.Notes).FirstOrDefaultAsync(p => p.ProjectId == id);
             if (project == null)
             {
                 return NotFound();
@@ -165,7 +165,7 @@ namespace Order.Controllers.EntitiesControllers
                     {
                         Console.WriteLine("СПИСОК ЗАДАЧ НЕПУСТОЙ");
                         var tasksToUpdate = await _context.Tasks
-                            .Where(t => updatedProject.TaskIds.Contains(t.Id))
+                            .Where(t => updatedProject.TaskIds.Contains(t.TaskId))
                             .ToListAsync();
 
                         // Если количество найденных задач не совпадает с количеством переданных id
@@ -210,7 +210,7 @@ namespace Order.Controllers.EntitiesControllers
                 // Если новых задач не было - без изменений
                 else
                 {
-                    var taskIds = project.Tasks.Select(t => t.Id).ToList();
+                    var taskIds = project.Tasks.Select(t => t.TaskId).ToList();
                     updatedProject.TaskIds = taskIds;
                 }
 
@@ -221,7 +221,7 @@ namespace Order.Controllers.EntitiesControllers
                     if (jsonDict["noteIds"] != null)
                     {
                         var notesToUpdate = await _context.Notes
-                            .Where(t => updatedProject.NoteIds.Contains(t.Id))
+                            .Where(t => updatedProject.NoteIds.Contains(t.NoteId))
                             .ToListAsync();
 
                         // Если количество найденных заметок не совпадает с количеством переданных id
@@ -262,7 +262,7 @@ namespace Order.Controllers.EntitiesControllers
                 // Если новых заметок не было - без изменений
                 else
                 {
-                    var notesIds = project.Notes.Select(t => t.Id).ToList();
+                    var notesIds = project.Notes.Select(t => t.NoteId).ToList();
                     updatedProject.NoteIds = notesIds;
                 }
 

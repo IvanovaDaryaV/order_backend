@@ -10,7 +10,7 @@ namespace Order.Models
         [Key]
         [Required]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        public int TaskId { get; set; }
         [Required]
         public string Name { get; set; }
         public string? Description { get; set; }

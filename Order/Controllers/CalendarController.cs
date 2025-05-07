@@ -60,7 +60,7 @@ namespace Order.Controllers
             var user = await _context.Users
                 .Include(u => u.Tasks)
                 .Include(u => u.Events)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user == null)
                 return NotFound($"User with ID {userId} not found.");
@@ -102,13 +102,13 @@ namespace Order.Controllers
             //    .ToListAsync();
 
             var contexts = await _context.Contexts
-                .Where(c => contextIds.Contains(c.Id))
+                .Where(c => contextIds.Contains(c.ContextId))
                 .ToListAsync();
 
             // Маппируем контексты на ContextDto
             //var contextDtos = _mapper.Map<List<ContextDto>>(contexts);
             var contextDtos = _context.Contexts
-                .Where(c => contextIds.Contains(c.Id))
+                .Where(c => contextIds.Contains(c.ContextId))
                 .Select(c => new ContextDto
                 {
                     //Id = c.Id,
@@ -120,7 +120,7 @@ namespace Order.Controllers
 
             return Ok(new
             {
-                user.Id,
+                user.UserId,
                 Tasks = filteredTasks,
                 Events = user.Events,
                 Contexts = contextDtos
