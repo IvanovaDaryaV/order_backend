@@ -27,16 +27,16 @@ namespace Order.Controllers.EntitiesControllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProjectById(int id)
         {
-            var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == id);
-            var tasks = _context.Tasks
-                        .Where(task => project.TaskIds.Contains(task.TaskId))
-                        .ToList();
+            var project = await _context.Projects
+                .Include(p => p.Tasks) 
+                .Include(p => p.Notes)
+                .Include(p => p.Events)
+                .FirstOrDefaultAsync(p => p.ProjectId == id);
+
             if (project == null)
                 return NotFound();
-            return Ok(new {
-                project,
-                tasks
-            });
+
+            return Ok(project);
         }
 
         // GET: api/Project/{userId}
@@ -47,8 +47,6 @@ namespace Order.Controllers.EntitiesControllers
         public async Task<IActionResult> GetProjectByUserId(Guid userId)
         {
             var projects = await _context.Projects
-                    //.Where(up => up.UserId == userId)
-                    //.Select(up => up.Project)
                     .Where(p => p.ProjectUsers.Any(pu => pu.UserId == userId))
                     .Include(project => project.Tasks)
                     .Include(project => project.Events)
@@ -85,6 +83,7 @@ namespace Order.Controllers.EntitiesControllers
             return CreatedAtAction(nameof(GetProjectById), new { id = newProject.ProjectId }, newProject);
         }
 
+        // Метод добавления пользователей в проект (добавление привязки)
         [HttpPost("{projectId:int}/users")]
         public async Task<IActionResult> AddUsersToProject(int projectId, [FromBody] Guid[] userIds)
         {
@@ -111,6 +110,7 @@ namespace Order.Controllers.EntitiesControllers
             return Ok();
         }
 
+        // Метод удаления пользователей из проекта (удаление привязки)
         [HttpDelete("{projectId:int}/users")]
         public async Task<IActionResult> RemoveUsersFromProject(int projectId, [FromBody] Guid[] userIds)
         {
@@ -155,117 +155,6 @@ namespace Order.Controllers.EntitiesControllers
                 var jsonString = body.ToString();
                 var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
 
-
-                // Проверка: было ли передано новое значение TaskIds ----------------------------
-                if (jsonDict.ContainsKey("taskIds"))
-                {
-                    Console.WriteLine("ПОЛУЧЕН СПИСОК ЗАДАЧ");
-                    // Значение было передано и оно не null
-                    if (jsonDict["taskIds"] != null)
-                    {
-                        Console.WriteLine("СПИСОК ЗАДАЧ НЕПУСТОЙ");
-                        var tasksToUpdate = await _context.Tasks
-                            .Where(t => updatedProject.TaskIds.Contains(t.TaskId))
-                            .ToListAsync();
-
-                        // Если количество найденных задач не совпадает с количеством переданных id
-                        if (tasksToUpdate.Count != updatedProject.TaskIds.Count)
-                        {
-                            return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
-                        }
-                        else
-                        {
-                            // Конфликт возникает, если у задачи из списка уже есть проект, к которому она привязана,
-                            // и этот проект не текущий, а другой.
-                            // Если задача уже привязана к этому проекту, конфликта не будет
-                            // Например, чтобы дополнить список, не нужно переприсваивать значения заново
-                            bool conflict = false;
-                            foreach (var task in tasksToUpdate)
-                            {
-                                if (task.ProjectId != null && task.ProjectId != id)
-                                    conflict = true;
-                            }
-
-                            if (!conflict)
-                            {
-                                Console.WriteLine("КОНФЛИКТА НЕТ, ПЕРЕПРИВЯЗЫВАЕМ ЗАДАЧИ");
-                                await mainService.UnassignTasksFromProject(id);
-                                await mainService.AssignTasksToProject(id, updatedProject.TaskIds);
-
-                                // Обновим связанные задачи вручную, чтобы они не были перезаписаны
-                                project.Tasks = await _context.Tasks.Where(t => t.ProjectId == id).ToListAsync();
-                            }
-                            else
-                            {
-                                return BadRequest("Конфликт: задача(и) уже привязана к другому проекту.  Изменения не были применены.");
-                            }    
-                        }
-                    }
-                    // Если передано значение null
-                    else
-                    {
-                        await mainService.UnassignTasksFromProject(id);
-                    }
-                }
-                // Если новых задач не было - без изменений
-                else
-                {
-                    var taskIds = project.Tasks.Select(t => t.TaskId).ToList();
-                    updatedProject.TaskIds = taskIds;
-                }
-
-                // Проверка: было ли передано новое значение NoteIds ----------------------------
-                if (jsonDict.ContainsKey("noteIds"))
-                {
-                    // Значение было передано и оно не null
-                    if (jsonDict["noteIds"] != null)
-                    {
-                        var notesToUpdate = await _context.Notes
-                            .Where(t => updatedProject.NoteIds.Contains(t.NoteId))
-                            .ToListAsync();
-
-                        // Если количество найденных заметок не совпадает с количеством переданных id
-                        if (notesToUpdate.Count != updatedProject.NoteIds.Count)
-                        {
-                            return BadRequest("Некоторые из переданных заметок не найдены.  Изменения не были применены.");
-                        }
-                        else
-                        {
-                            // Конфликт возникает, если у заметки из списка уже есть проект, к которому она привязана,
-                            // и этот проект не текущий, а другой.
-                            // Если заметка уже привязана к этому проекту, конфликта не будет
-                            // Например, чтобы дополнить список, не нужно переприсваивать значения заново
-                            bool conflict = false;
-                            foreach (var note in notesToUpdate)
-                            {
-                                if (note.ProjectId != null && note.ProjectId != id)
-                                    conflict = true;
-                            }
-
-                            if (!conflict)
-                            {
-                                await mainService.UnassignNotesFromProject(id);
-                                await mainService.AssignNotesToProject(id, updatedProject.NoteIds);
-                            }
-                            else
-                            {
-                                return BadRequest("Конфликт: заметка(и) уже привязана к другому проекту.  Изменения не были применены.");
-                            }
-                        }
-                    }
-                    // Если передано значение null
-                    else
-                    {
-                        await mainService.UnassignNotesFromProject(id);
-                    }
-                }
-                // Если новых заметок не было - без изменений
-                else
-                {
-                    var notesIds = project.Notes.Select(t => t.NoteId).ToList();
-                    updatedProject.NoteIds = notesIds;
-                }
-
                 // Устанавливаем значения null для соответствующих полей
                 mainService.SetNullFields(project, jsonDict);
 
@@ -285,6 +174,106 @@ namespace Order.Controllers.EntitiesControllers
             }
             return NoContent();
             
+        }
+
+        // Метод привязки задач к проекту (чтобы не передавать полностью объекты задач - только список id)
+        [HttpPost("{projectId}/assign-tasks")]
+        public async Task<IActionResult> AssignTasksToProject(int projectId, [FromBody] List<int> taskIds)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null)
+                return NotFound("Проект не найден");
+
+            var tasks = await _context.Tasks
+                .Where(t => taskIds.Contains(t.TaskId))
+                .ToListAsync();
+
+            // Проверка на конфликты
+            var conflictTasks = tasks.Where(t => t.ProjectId != null && t.ProjectId != projectId).ToList();
+            if (conflictTasks.Any())
+            {
+                return BadRequest($"Некоторые задачи уже привязаны к другим проектам: {string.Join(", ", conflictTasks.Select(t => t.TaskId))}");
+            }
+
+            // Привязка задач
+            foreach (var task in tasks)
+            {
+                task.ProjectId = projectId;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Метод отвязки задач от проекта (чтобы не передавать полностью объекты задач - только список id)
+        [HttpPost("{projectId}/unassign-tasks")]
+        public async Task<IActionResult> UnassignTasksFromProject(int projectId, [FromBody] List<int> taskIds)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null)
+                return NotFound("Проект не найден");
+
+            var tasks = await _context.Tasks
+                .Where(t => taskIds.Contains(t.TaskId) && t.ProjectId == projectId)
+                .ToListAsync();
+
+            if (tasks.Count == 0)
+                return BadRequest("Не найдены задачи, привязанные к указанному проекту");
+
+            foreach (var task in tasks)
+            {
+                task.ProjectId = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Метод привязки заметок к проекту
+        [HttpPost("{projectId}/assign-notes")]
+        public async Task<IActionResult> AssignNotesToProject(int projectId, [FromBody] List<int> noteIds)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null)
+                return NotFound("Проект не найден");
+
+            var notes = await _context.Notes
+                .Where(n => noteIds.Contains(n.NoteId))
+                .ToListAsync();
+
+            var conflictNotes = notes.Where(n => n.ProjectId != null && n.ProjectId != projectId).ToList();
+            if (conflictNotes.Any())
+            {
+                return BadRequest($"Некоторые заметки уже привязаны к другим проектам: {string.Join(", ", conflictNotes.Select(n => n.NoteId))}");
+            }
+
+            foreach (var note in notes)
+            {
+                note.ProjectId = projectId;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Метод отвязки заметок от проекта
+        [HttpPost("{projectId}/unassign-notes")]
+        public async Task<IActionResult> UnassignNotesFromProject(int projectId, [FromBody] List<int> noteIds)
+        {
+            var notes = await _context.Notes
+                .Where(n => noteIds.Contains(n.NoteId) && n.ProjectId == projectId)
+                .ToListAsync();
+
+            if (!notes.Any())
+                return BadRequest("Не найдены заметки, привязанные к проекту");
+
+            foreach (var note in notes)
+            {
+                note.ProjectId = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
 

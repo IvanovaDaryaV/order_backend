@@ -28,17 +28,13 @@ namespace Order.Controllers.EntitiesControllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetEventById(int id)
         {
-            var evt = await _context.Events.FindAsync(id);
-            var tasks = _context.Tasks
-                        .Where(task => evt.TaskIds.Contains(task.TaskId))
-                        .ToList();
+            var evt = await _context.Events
+                        .Include(evt => evt.Tasks)
+                        .FirstOrDefaultAsync(evt => evt.EventId == id);
             if (evt == null)
                 return NotFound();
-            return Ok(new
-            {
-                evt,
-                tasks
-            });
+
+            return Ok(evt);
         }
 
         // POST: api/Event
@@ -88,58 +84,6 @@ namespace Order.Controllers.EntitiesControllers
                 // Устанавливаем значения null для соответствующих полей
                 mainService.SetNullFields(evt, jsonDict);
 
-                // Проверка: было ли передано новое значение TaskIds
-                if (jsonDict.ContainsKey("taskIds"))
-                {
-                    // Значение было передано и оно не null
-                    if (jsonDict["taskIds"] != null)
-                    {
-                        var tasksToUpdate = await _context.Tasks
-                            .Where(t => updatedEvent.TaskIds.Contains(t.TaskId))
-                            .ToListAsync();
-
-                        // Если количество найденных задач не совпадает с количеством переданных id
-                        if (tasksToUpdate.Count != updatedEvent.TaskIds.Count)
-                        {
-                            return BadRequest("Некоторые из переданных задач не найдены.  Изменения не были применены.");
-                        }
-                        else
-                        {
-                            // Конфликт возникает, если у задачи из списка уже есть событие, к которому она привязана,
-                            // и это событие не текущее.
-                            // Если задача уже привязана к этому событию, конфликта не будет
-                            // Например, чтобы дополнить список, не нужно переприсваивать значения заново
-                            bool conflict = false;
-                            foreach (var task in tasksToUpdate)
-                            {
-                                if (task.EventId != null && task.EventId != id)
-                                    conflict = true;
-                            }
-                            if (!conflict)
-                            {
-                                await mainService.UnassignTasksFromEvent(id);
-                                await mainService.AssignTasksToEvent(id, updatedEvent.TaskIds);
-                            }
-                            else
-                            {
-                                return BadRequest("Конфликт: задача(и) уже привязана к другому событию.  Изменения не были применены.");
-                            }
-
-                        }
-                    }
-                    // Если передано значение null
-                    else
-                    {
-                        await mainService.UnassignTasksFromEvent(id);
-                    }
-                }
-                // Если новых задач не было - без изменений
-                else
-                {
-                    var taskIds = evt.Tasks.Select(t => t.TaskId).ToList();
-                    updatedEvent.TaskIds = taskIds;
-                }
-
                 _mapper.Map(updatedEvent, evt);
 
                 // Валидация
@@ -154,6 +98,59 @@ namespace Order.Controllers.EntitiesControllers
             }
             return NoContent();
 
+        }
+
+        // Метод привязки задач к событию (чтобы не передавать полностью объекты задач - только список id)
+        [HttpPost("{eventId}/assign-tasks")]
+        public async Task<IActionResult> AssignTasksToEvent(int eventId, [FromBody] List<int> taskIds)
+        {
+            var evt = await _context.Events.FindAsync(eventId);
+            if (evt == null)
+                return NotFound("Событие не найдено");
+
+            var tasks = await _context.Tasks
+                .Where(t => taskIds.Contains(t.TaskId))
+                .ToListAsync();
+
+            // Проверка на конфликты
+            var conflictTasks = tasks.Where(t => t.EventId != null && t.EventId != eventId).ToList();
+            if (conflictTasks.Any())
+            {
+                return BadRequest($"Некоторые задачи уже привязаны к другому событию: {string.Join(", ", conflictTasks.Select(t => t.TaskId))}");
+            }
+
+            // Привязка задач
+            foreach (var task in tasks)
+            {
+                task.EventId = eventId;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Метод отвязки задач от события (чтобы не передавать полностью объекты задач - только список id)
+        [HttpPost("{eventId}/unassign-tasks")]
+        public async Task<IActionResult> UnassignTasksFromEvent(int eventId, [FromBody] List<int> taskIds)
+        {
+            var evt = await _context.Events.FindAsync(eventId);
+            if (evt == null)
+                return NotFound("Событие не найдено");
+
+            var tasks = await _context.Tasks
+                .Where(t => taskIds.Contains(t.TaskId) && t.EventId == eventId)
+                .ToListAsync();
+
+            if (tasks.Count == 0)
+                return BadRequest("Не найдены задачи, привязанные к указанному событию");
+
+            foreach (var task in tasks)
+            {
+                task.EventId = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // DELETE: api/Event/{id}

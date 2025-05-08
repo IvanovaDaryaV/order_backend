@@ -131,41 +131,41 @@ namespace Order.Controllers.EntitiesControllers
                 // Если при изменении задачи было передано значение для projectId
                 // не рассматривается ситуация, когда поле projectId = null, 
                 // потому что отвязать задачу от проекта нельзя, можно только удалить на совсем
-                if (jsonDict.ContainsKey("projectId"))
-                {
-                    if (jsonDict["projectId"] != null)
-                    {
-                        var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == updatedTask.ProjectId);
-                        // обновление списка задач, которые принадлежат к указанному проекту
-                        if (project == null)
-                            return BadRequest("Проект не существует");
-                        else
-                            if (project.TaskIds != null)
-                            project.TaskIds.Add(id);
-                        else
-                            project.TaskIds = new List<int> { id };
-                    }
-                }
+                //if (jsonDict.ContainsKey("projectId"))
+                //{
+                //    if (jsonDict["projectId"] != null)
+                //    {
+                //        var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == updatedTask.ProjectId);
+                //        // обновление списка задач, которые принадлежат к указанному проекту
+                //        if (project == null)
+                //            return BadRequest("Проект не существует");
+                //        else
+                //            if (project.TaskIds != null)
+                //            project.TaskIds.Add(id);
+                //        else
+                //            project.TaskIds = new List<int> { id };
+                //    }
+                //}
                 // Если при изменении задачи было передано значение для projectId
-                if (jsonDict.ContainsKey("eventId"))
-                {
-                    var evt = await _context.Events.FirstOrDefaultAsync(p => p.EventId == updatedTask.EventId);
-                    if (jsonDict["eventId"] != null)
-                    {
-                        // обновление списка задач, которые принадлежат к указанному проекту
-                        if (evt == null)
-                            return BadRequest("Событие не существует");
-                        else
-                            evt.TaskIds.Add(id);
-                    }
-                    else
-                    {
-                        if (evt == null)
-                            return BadRequest("Событие не существует");
-                        else
-                            evt.TaskIds.Remove(id);
-                    }
-                }
+                //if (jsonDict.ContainsKey("eventId"))
+                //{
+                //    var evt = await _context.Events.FirstOrDefaultAsync(p => p.EventId == updatedTask.EventId);
+                //    if (jsonDict["eventId"] != null)
+                //    {
+                //        // обновление списка задач, которые принадлежат к указанному проекту
+                //        if (evt == null)
+                //            return BadRequest("Событие не существует");
+                //        else
+                //            evt.TaskIds.Add(id);
+                //    }
+                //    else
+                //    {
+                //        if (evt == null)
+                //            return BadRequest("Событие не существует");
+                //        else
+                //            evt.TaskIds.Remove(id);
+                //    }
+                //}
 
                 _mapper.Map(updatedTask, task);
 
@@ -192,7 +192,9 @@ namespace Order.Controllers.EntitiesControllers
                 return NotFound();
             try
             {
-                await taskService.RemoveTask(id);
+                //await taskService.RemoveTask(id);
+                _context.Tasks.Remove(task);
+                await _context.SaveChangesAsync();
                 return NoContent();
             }
             catch (ArgumentException ex)

@@ -133,8 +133,7 @@ namespace Order.Controllers.EntitiesControllers
                             {
                                 note.Tag = null;
                             }
-
-                            project.NoteIds.Add(note.NoteId);
+                            note.ProjectId = project.ProjectId;
                         }
                     }
                 }
