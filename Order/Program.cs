@@ -16,9 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // јвторизаци€ =================================================
-builder.Services.AddIdentity<User, IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+//builder.Services.AddIdentity<User, IdentityRole<Guid>>()
+//    .AddEntityFrameworkStores<ApplicationDbContext>()
+//    .AddDefaultTokenProviders();
 
 builder.Configuration.AddEnvironmentVariables();
 
@@ -121,6 +121,10 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHttpClient<ScheduleFetcherService>();
 builder.Services.AddHttpClient<EventParser>();
 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -134,6 +138,13 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
+
+// при каждом запуске автоматическое применение миграций + создание Ѕƒ, если ее не существует
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate(); // <-- примен€ет все миграции
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
