@@ -34,23 +34,10 @@ namespace Order.Migrations
                 name: "users",
                 columns: table => new
                 {
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     name = table.Column<string>(type: "text", nullable: false),
                     email = table.Column<string>(type: "text", nullable: false),
-                    password_hash = table.Column<string>(type: "text", nullable: true),
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_name = table.Column<string>(type: "text", nullable: true),
-                    normalized_user_name = table.Column<string>(type: "text", nullable: true),
-                    normalized_email = table.Column<string>(type: "text", nullable: true),
-                    email_confirmed = table.Column<bool>(type: "boolean", nullable: false),
-                    security_stamp = table.Column<string>(type: "text", nullable: true),
-                    concurrency_stamp = table.Column<string>(type: "text", nullable: true),
-                    phone_number = table.Column<string>(type: "text", nullable: true),
-                    phone_number_confirmed = table.Column<bool>(type: "boolean", nullable: false),
-                    two_factor_enabled = table.Column<bool>(type: "boolean", nullable: false),
-                    lockout_end = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    lockout_enabled = table.Column<bool>(type: "boolean", nullable: false),
-                    access_failed_count = table.Column<int>(type: "integer", nullable: false)
+                    password_hash = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
