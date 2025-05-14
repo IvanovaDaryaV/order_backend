@@ -40,44 +40,44 @@ namespace Order.Controllers.EntitiesControllers
         {
             var user = await _context.Users
                 .Include(u => u.Tasks)
-                //.Include(u => u.Projects)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
             if (user == null)
                 return NotFound();
 
             var tasks = user.Tasks;
-            //var projects = user.Projects;
 
             if (tasks == null)
                 return NotFound();
 
-            var contextIds = tasks
-                .Where(task => task.ContextId != null)
-                .Select(task => task.ContextId)
-                .Distinct()
-                .ToList();
+            // Фильтр контекстов
 
-            var contexts = await _context.Contexts
-                .Where(c => contextIds.Contains(c.ContextId))
-                .ToListAsync();
+            //var contextIds = tasks
+            //    .Where(task => task.ContextId != null)
+            //    .Select(task => task.ContextId)
+            //    .Distinct()
+            //    .ToList();
 
-            var result = new Dictionary<string, List<object>>();
+            //var contexts = await _context.Contexts
+            //    .Where(c => contextIds.Contains(c.ContextId))
+            //    .ToListAsync();
 
-            foreach (var context in contexts)
-            {
-                // Для каждого контекста ищем задачи и проекты, связанные с этим контекстом
-                var contextTasks = tasks
-                    .Where(task => task.ContextId == context.ContextId)
-                    .Select(task => new { task.Name, task.Project })
-                    .ToList();
+            //var result = new Dictionary<string, List<object>>();
 
-                if (contextTasks.Any())
-                {
-                    result[context.Name] = contextTasks.Cast<object>().ToList();
-                }
-            }
+            //foreach (var context in contexts)
+            //{
+            //    // Для каждого контекста ищем задачи и проекты, связанные с этим контекстом
+            //    var contextTasks = tasks
+            //        .Where(task => task.ContextId == context.ContextId)
+            //        .Select(task => new { task.Name, task.Project })
+            //        .ToList();
 
-            return Ok(result);
+            //    if (contextTasks.Any())
+            //    {
+            //        result[context.Name] = contextTasks.Cast<object>().ToList();
+            //    }
+            //}
+
+            return Ok(tasks);
         }
 
         // POST: api/Task
