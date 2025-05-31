@@ -2,6 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order.Models;
+using System.Text;
+using Microsoft.ML;
+using Microsoft.ML.Data;
+using Order.Services;
 
 /*
  Контроллер для аналитики (статистика по выполнению задач пользователя)
@@ -20,7 +24,7 @@ namespace Order.Controllers
             _mapper = mapper;
         }
 
-        // Основной эндпоинт статистики
+        // Основной эндпоинт общей статистики
         [HttpGet("overview")]
         public async Task<IActionResult> GetStats(Guid userId)
         {
@@ -33,8 +37,6 @@ namespace Order.Controllers
             var tasks = user.Tasks;
             if (tasks == null)
                 return NotFound();
-
-            var review = "this is review";
 
             // Получение статистики
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -102,18 +104,121 @@ namespace Order.Controllers
             return Ok(heatmap);
         }
 
-        // Динамика "завала" 
-        //[HttpGet("overload-analysis")]
-        //public async Task<IActionResult> GetOverloadAnalysis()
-        //{
+        // Рекомендации
+        [HttpGet("recommendations")]
+        public async Task<IActionResult> GetRecommendations(Guid userId)
+        {
+            var user = await _context.Users
+                .Include(u => u.Tasks)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
 
-        //}
+            if (user == null || user.Tasks == null)
+                return NotFound();
 
-        //// Рекомендации
-        //[HttpGet("recommendations")]
-        //public async Task<IActionResult> GetRecommendations()
-        //{
+            var tasks = user.Tasks;
+            var now = DateTime.UtcNow;
+            var today = DateOnly.FromDateTime(now);
+            var weekAgo = now.AddDays(-7);
+            var weekAhead = now.AddDays(7);
 
-        //}
+            // Выполненные задачи за последнюю неделю
+            var completed = tasks
+                .Where(t => t.DateDone.HasValue && t.DateDone.Value >= weekAgo)
+                .ToList();
+
+            double avgCompletedPerDay = completed.Count / 7.0;
+
+            // Просроченные задачи (не помечены как выполненные)
+            var overdue = tasks
+                .Where(t => !t.DateDone.HasValue && t.HardDeadline.HasValue && t.HardDeadline.Value < today)
+                .ToList();
+
+            // Задачи, которые предстоит выполнить в ближайшую неделю
+            var upcoming = tasks
+                .Where(t => !t.DateDone.HasValue &&
+                            t.HardDeadline.HasValue &&
+                            t.HardDeadline.Value >= today &&
+                            t.HardDeadline.Value <= DateOnly.FromDateTime(weekAhead))
+                .ToList();
+
+            // Формирование рекомендаций
+            var sb = new StringBuilder();
+            //sb.AppendLine($"Вы в среднем завершаете {Math.Round(avgCompletedPerDay, 2)} задач в день.");
+
+            if (overdue.Count > 0)
+            {
+                var avgDelay = overdue
+                    .Select(t => today.DayNumber - t.HardDeadline.Value.DayNumber)
+                    .Average();
+
+                sb.AppendLine($"У вас {overdue.Count} просроченных задач, в среднем на {Math.Round(avgDelay, 1)} дней.");
+                if (avgDelay > 2)
+                    sb.AppendLine("Рекомендуется срочно закрыть самые старые задачи.");
+            }
+            else
+            {
+                sb.AppendLine("У вас нет просроченных задач — отлично!");
+            }
+
+            sb.AppendLine($"В течение следующей недели предстоит выполнить {upcoming.Count} задач.");
+
+            if (avgCompletedPerDay == 0)
+            {
+                sb.AppendLine("Вы не завершали задачи на этой неделе. Попробуйте начать с простых задач.");
+            }
+            else if (upcoming.Count > avgCompletedPerDay * 7)
+            {
+                sb.AppendLine("Похоже, объём задач превышает вашу текущую продуктивность. Перераспределите нагрузку.");
+            }
+            else
+            {
+                sb.AppendLine("Нагрузка на следующую неделю соответствует вашему темпу — продолжайте в том же духе!");
+            }
+
+            // Совет в конце ?
+            sb.AppendLine();
+            sb.AppendLine("Совет: планируйте не более 3 приоритетных задач в день.");
+
+            return Ok(new
+            {
+                Recommendations = sb.ToString()
+            });
+        }
+
+        [HttpGet("intellectual-planning")]
+        public async Task<IActionResult> GetPlan(Guid userId, [FromServices] SmartPlannerService plannerService)
+        {
+            var user = await _context.Users
+                .Include(u => u.Tasks)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null)
+                return NotFound();
+
+            var tasks = user.Tasks;
+            if (tasks == null)
+                return NotFound();
+
+            var completedTasks = tasks.Where(t => t.DateDone != null);
+
+            // Подсчет среднего времени выполнения задач пользователем
+            var avgCompletionTime = plannerService.CalculateAverageCompletionTime(completedTasks.ToList());
+
+            // Подсчет оптимального времени начала для каждой задачи
+            string tmp = string.Empty;
+            foreach (Models.Task task in tasks){
+                if (task.HardDeadline != null)
+                {
+                    var date = plannerService.CalculateStartDate(task, avgCompletionTime);
+                    tmp += $"\n{task.Name}: " +
+                        $"{date} " +
+                        $"(жесткий дедлайн: {task.HardDeadline}, приоритет задачи: {(task.Priority == null ? 0 : task.Priority)}) " +
+                        $"итого нужно начать за {task.HardDeadline.Value.DayNumber - date.DayNumber} дней";
+                }
+            }
+
+            return Ok($"Среднее время выполнения задач для пользователя {userId}: {avgCompletionTime.ToString().Split('.')[0]} дней, {avgCompletionTime.ToString().Split('.')[1]} часов. " +
+                $"\n\n" +
+                $"Рекомендованные даты для начала задач: {tmp}");
+        }
     }
 }

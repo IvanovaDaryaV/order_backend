@@ -71,12 +71,6 @@ namespace Order.Services
         // Получение новостей ИГИП https://www.utmn.ru/igip/
         public async Task<List<string>> GetEventsTMNigip(string url)
         {
-            // получение HTML страницы
-            //var response = await _httpClient.GetStringAsync(url);
-
-            //// загрузка HTML в HtmlAgilityPack
-            //var htmlDoc = new HtmlDocument();
-            //htmlDoc.LoadHtml(response);
             var events = new List<string>();
 
             for (int page = 1; page <= 5; page++)
@@ -108,28 +102,6 @@ namespace Order.Services
                         {
                             events.Add($"{date}: {title}");
                         }
-
-
-                        //var dateNode = eventNode.SelectSingleNode(".//div[@class='news-item_info']");
-                        //string date = null;
-
-                        //if (dateNode != null)
-                        //{
-                        //    //var day = dateNode.SelectSingleNode(".//div[@class='day']")?.InnerText.Trim();
-                        //    //var month = dateNode.SelectSingleNode(".//div[@class='month']")?.InnerText.Trim();
-                        //    //var year = dateNode.SelectSingleNode(".//div[@class='year']")?.InnerText.Trim();
-                        //    //date = $"{day} {month} {year}";
-                        //    date = dateNode.SelectSingleNode(".//div[@class='news-item__date']")?.InnerText.Trim();
-                        //}
-
-                        //var titleNode = eventNode.SelectSingleNode(".//div[h4]/a");
-                        //var title = titleNode?.InnerText.Trim();
-
-                        // формирование строку с результатом
-                        //if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
-                        //{
-                        //    events.Add($"{date}: {title}");
-                        //}
                     }
                 }
                 else

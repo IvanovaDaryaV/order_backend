@@ -62,7 +62,6 @@ public class FileImportController : ControllerBase
         }
 
         var calendar = Calendar.Load(fileContent);
-        var events = new List<Event>();
 
         // Перед обработкой определить источник, т.к. у модеуса и лмс немного разные структуры описания
         // События из modeus записываются как сущность Event, lms - Task

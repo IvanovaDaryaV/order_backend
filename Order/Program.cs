@@ -33,6 +33,7 @@ builder.Configuration.AddEnvironmentVariables();
 //}
 
 builder.Services.AddScoped<ScheduleSharingService>();
+builder.Services.AddScoped<SmartPlannerService>();
 
 builder.Services.AddScoped<MainService>()
     .AddAuthentication(options =>

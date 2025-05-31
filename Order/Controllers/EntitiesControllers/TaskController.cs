@@ -87,6 +87,7 @@ namespace Order.Controllers.EntitiesControllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            newTask.DateCreated = DateTime.Now;
             _context.Tasks.Add(newTask);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetTaskById), new { id = newTask.TaskId }, newTask);

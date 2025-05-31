@@ -11,7 +11,9 @@ namespace Order.Models.DTO
         public DateOnly? HardDeadline { get; set; }
         public DateOnly? SoftDeadline { get; set; }
         [Column(TypeName = "timestamp without time zone")]
-        public DateTime? DateDone { get; set; } // время и дата, когда задача была выполнена
+        public DateTime? DateDone { get; set; } // время и дата, когда задача была ВЫПОЛНЕНА
+        [Column(TypeName = "timestamp without time zone")]
+        public DateTime? DateCreated { get; set; } // время и дата, когда задача была СОЗДАНА
         public bool? Status { get; set; }
         public int? ContextId { get; set; }
         public int? Priority { get; set; }
