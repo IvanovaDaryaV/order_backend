@@ -18,50 +18,46 @@ namespace Order.Services
             }
 
             // Учет прокрастинации пользователя (+20% если часто откладывает)
-            //if (AvgDelayDays > 2)
+            //if (avgDelayTime > 2)
             //    bufferDays *= 1.2;
 
             return task.HardDeadline.Value.AddDays((int)-bufferDays);
         }
 
-            //}
-            //public Dictionary<DateTime, List<Models.Task>> DistributeTasks(List<Models.Task> tasks)
-            //{
-            //    var schedule = new Dictionary<DateTime, List<Models.Task>>();
-            //    double maxDailyHours = 5; // Лимит часов в день
+        // Метод распределения задач по календарю без перегрузки
+        public Dictionary<DateOnly, List<Models.Task>> DistributeTasks(List<Models.Task> tasks, TimeSpan avgCompletionTime)
+        {
+            var schedule = new Dictionary<DateOnly, List<Models.Task>>();
+            double maxDailyTasks = 3; // Максимум 3 задачи в день (например)
 
-            //    // Сортировка: сначала высокоприоритетные и ближайшие дедлайны
-            //    var sortedTasks = tasks.OrderBy(t => t.Priority)
-            //                          .ThenBy(t => t.HardDeadline);
+            // Сортируем по приоритету и дедлайну
+            var sortedTasks = tasks.OrderBy(t => t.Priority)
+                                  .ThenBy(t => t.HardDeadline);
 
-            //    foreach (var task in sortedTasks)
-            //    {
-            //        TaskInfo currentTaskInfo = new TaskInfo();
-            //        currentTaskInfo.Deadline = task.HardDeadline;
-            //        currentTaskInfo.Priority = (int)(task.Priority != null ? task.Priority : 2);
-            //        currentTaskInfo.Complexity = (int)(task.Complexity != null ? task.Complexity : 5);
-            //        currentTaskInfo.AvgCompletionTime =
+            foreach (var task in sortedTasks)
+            {
+                // Начинаем с сегодняшнего дня или дедлайна - буфер
+                var startDay = DateOnly.FromDateTime(DateTime.Today);
+                var deadlineDay = task.HardDeadline;
 
-            //        var startDate = CalculateStartDate(task);
-            //        var hoursNeeded = task.AvgCompletionTime.TotalHours;
+                for (var day = startDay; day <= deadlineDay; day = day.AddDays(1))
+                {
+                    if (!schedule.ContainsKey(day))
+                        schedule[day] = new List<Models.Task>();
 
-            //        // Ищем день с достаточным количеством свободного времени
-            //        for (var day = startDate; day < task.Deadline; day = day.AddDays(1))
-            //        {
-            //            if (!schedule.ContainsKey(day.Date))
-            //                schedule[day.Date] = new List<Models.Task>();
+                    // Проверяем, не превышен ли дневной лимит
+                    if (schedule[day].Count < maxDailyTasks)
+                    {
+                        schedule[day].Add(task);
+                        break; // Переходим к следующей задаче
+                    }
+                }
+            }
 
-            //            var busyHours = schedule[day.Date].Sum(t => t.AvgCompletionTime.TotalHours);
-            //            if (busyHours + hoursNeeded <= maxDailyHours)
-            //            {
-            //                schedule[day.Date].Add(task);
-            //                break;
-            //            }
-            //        }
-            //    }
-
-            //    return schedule;
-            //}
+            // Удаляем пустые дни (если нужно)
+            return schedule.Where(p => p.Value.Any())
+                          .ToDictionary(p => p.Key, p => p.Value);
+        }
 
 
         // Метод подсчета среднего выполнения задач для пользователя

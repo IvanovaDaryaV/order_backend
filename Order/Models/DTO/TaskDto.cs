@@ -16,6 +16,8 @@ namespace Order.Models.DTO
         public DateTime? DateCreated { get; set; } // время и дата, когда задача была СОЗДАНА
         public bool? Status { get; set; }
         public int? ContextId { get; set; }
+        public int? Complexity { get; set; }  // сложность 1-10
+        public string? Type { get; set; }  // тип задачи для аналитики: пользователь выбирает сам
         public int? Priority { get; set; }
         [Column(TypeName = "uuid")]
         public Guid? UserId { get; set; }

@@ -26,6 +26,8 @@ namespace Order.Models
         [Required]
         public string Email { get; set; }
         public string? PasswordHash { get; set; }
+        public string? Theme { get; set; }
+        public string? Language { get; set; }
         //[Required]
         //public int ProjectUserId { get; set; }
         public ICollection<Task>? Tasks { get; set; } = new List<Task>();

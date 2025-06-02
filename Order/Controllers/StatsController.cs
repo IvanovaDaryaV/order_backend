@@ -205,20 +205,55 @@ namespace Order.Controllers
 
             // Подсчет оптимального времени начала для каждой задачи
             string tmp = string.Empty;
-            foreach (Models.Task task in tasks){
-                if (task.HardDeadline != null)
+            //List<DateOnly> dates = new List<DateOnly>();
+            //List<int> taskIds = new List<int>();
+            Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
+            foreach (Models.Task task in tasks)
+            {
+                if (task.HardDeadline != null && task.DateDone == null)
                 {
-                    var date = plannerService.CalculateStartDate(task, avgCompletionTime);
-                    tmp += $"\n{task.Name}: " +
-                        $"{date} " +
-                        $"(жесткий дедлайн: {task.HardDeadline}, приоритет задачи: {(task.Priority == null ? 0 : task.Priority)}) " +
-                        $"итого нужно начать за {task.HardDeadline.Value.DayNumber - date.DayNumber} дней";
+                    tasksDates.Add(task.TaskId, plannerService.CalculateStartDate(task, avgCompletionTime));
+
+                    //tmp += $"\n{task.Name}: " +
+                    //    $"{date} " +
+                    //    $"(жесткий дедлайн: {task.HardDeadline}, приоритет задачи: {(task.Priority == null ? 0 : task.Priority)}) " +
+                    //    $"итого нужно начать за {task.HardDeadline.Value.DayNumber - date.DayNumber} дней";
                 }
             }
 
-            return Ok($"Среднее время выполнения задач для пользователя {userId}: {avgCompletionTime.ToString().Split('.')[0]} дней, {avgCompletionTime.ToString().Split('.')[1]} часов. " +
-                $"\n\n" +
-                $"Рекомендованные даты для начала задач: {tmp}");
+            //return Ok($"Среднее время выполнения задач для пользователя {userId}: {avgCompletionTime.ToString().Split('.')[0]} дней, {avgCompletionTime.ToString().Split('.')[1]} часов. " +
+            //    $"\n\n" +
+            //    $"Рекомендованные даты для начала задач: {tmp}");
+            
+            return Ok(new
+            {
+                UserId = userId,
+                AvgDays = avgCompletionTime.ToString().Split('.')[0],
+                AvgHours = avgCompletionTime.ToString().Split('.')[1],
+                DatesForTaskIds = tasksDates
+            });
         }
+
+        //[HttpGet("distribute-tasks")]
+        //public async Task<IActionResult> GetPlan2(Guid userId, [FromServices] SmartPlannerService plannerService)
+        //{
+        //    var user = await _context.Users
+        //        .Include(u => u.Tasks)
+        //        .FirstOrDefaultAsync(u => u.UserId == userId);
+        //    if (user == null)
+        //        return NotFound();
+
+        //    var tasks = user.Tasks;
+        //    if (tasks == null)
+        //        return NotFound();
+
+        //    var completedTasks = tasks.Where(t => t.DateDone != null);
+
+        //    // Подсчет среднего времени выполнения задач пользователем
+        //    var avgCompletionTime = plannerService.CalculateAverageCompletionTime(completedTasks.ToList());
+
+        //    // Составление оптимального расписания для пользователя
+        //    return Ok(plannerService.DistributeTasks(tasks.ToList(), avgCompletionTime));
+        //}
     }
 }
