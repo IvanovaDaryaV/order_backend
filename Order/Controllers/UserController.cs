@@ -26,6 +26,23 @@ public class UserController : ControllerBase
         _configuration = configuration;
     }
 
+    [Authorize]
+    [HttpGet("users")]
+    /// получить всех пользователей, кроме текущего (для проектов надо)
+    public async Task<IActionResult> GetAllUsersExceptCurrent()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var currentUserId))
+            return Unauthorized("User ID not found in token.");
+
+        var users = await _context.Users
+            .Where(u => u.UserId != currentUserId)
+            .ToListAsync();
+
+        return Ok(users);
+    }
+
     [HttpGet("id/{userId}")]
     [Authorize]
     public async Task<IActionResult> GetUserById(Guid userId)
