@@ -18,11 +18,11 @@ namespace Order.Mappings
                     (!(srcMember is IEnumerable<int> list) || list.Any())));
 
             CreateMap<ProjectDto, Project>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-            
+            CreateMap<Project, ProjectDto>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<TaskDto, Models.Task>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<ContextDto, Context>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<NoteDto, Note>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-
+            
         }
     }
 }

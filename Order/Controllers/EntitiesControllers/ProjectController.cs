@@ -68,12 +68,17 @@ namespace Order.Controllers.EntitiesControllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return BadRequest("User not found");
+
+            
             newProject.ProjectUsers = new List<ProjectUser>
             {
                 new ProjectUser
                 {
-                    UserId = userId,
-                    ProjectId = newProject.ProjectId,
+                    User = user,
+                    Project = newProject 
                 }
             };
 
