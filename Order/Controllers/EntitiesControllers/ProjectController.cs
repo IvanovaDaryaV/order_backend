@@ -47,28 +47,37 @@ namespace Order.Controllers.EntitiesControllers
         public async Task<IActionResult> GetProjectByUserId(Guid userId)
         {
             var projects = await _context.Projects
-                    .Where(p => p.ProjectUsers.Any(pu => pu.UserId == userId))
-                    .Include(project => project.Tasks)
-                    .Include(project => project.Events)
-                    .Include(project => project.Notes)
+                .Where(p => p.ProjectUsers.Any(pu => pu.UserId == userId))
+                .Include(p => p.Tasks)
+                .Include(p => p.Events)
+                .Include(p => p.Notes)
+                .Include(p => p.ProjectUsers)
+                .ToListAsync(); 
 
-                    .Select(project => new ProjectDto
-                    {
-                        ProjectId = project.ProjectId,
-                        Tasks = project.Tasks,
-                        Events = project.Events,
-                        Notes = project.Notes,
-                        UserIds = project.ProjectUsers.Select(pu => pu.UserId).ToList()
-                    })
-                    .ToListAsync();
+            var result = projects.Select(project => new ProjectDto
+            {
+                ProjectId = project.ProjectId,
+                Description = project.Description,
+                Priority = project.Priority,
+                ContextId = project.ContextId,
+                HardDeadline = project.HardDeadline,
+                SoftDeadline = project.SoftDeadline,
+                Status = project.Status,
+                OwnerId = project.OwnerId,
+                Events = project.Events,
+                Tasks = project.Tasks,
+                Notes = project.Notes,
+                UserIds = project.ProjectUsers.Select(pu => pu.UserId).ToList()
+            }).ToList();
 
-            if (!projects.Any())
+            if (!result.Any())
             {
                 return NotFound("Для данного userId не найдены привязанные к нему проекты");
             }
 
-            return Ok(projects);
+            return Ok(result);
         }
+
 
         // POST: api/Project
         [HttpPost]
