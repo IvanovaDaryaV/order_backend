@@ -51,6 +51,15 @@ namespace Order.Controllers.EntitiesControllers
                     .Include(project => project.Tasks)
                     .Include(project => project.Events)
                     .Include(project => project.Notes)
+
+                    .Select(project => new ProjectDto
+                    {
+                        ProjectId = project.ProjectId,
+                        Tasks = project.Tasks,
+                        Events = project.Events,
+                        Notes = project.Notes,
+                        UserIds = project.ProjectUsers.Select(pu => pu.UserId).ToList()
+                    })
                     .ToListAsync();
 
             if (!projects.Any())
@@ -72,7 +81,9 @@ namespace Order.Controllers.EntitiesControllers
             if (user == null)
                 return BadRequest("User not found");
 
-            
+            newProject.OwnerId = userId;
+
+
             newProject.ProjectUsers = new List<ProjectUser>
             {
                 new ProjectUser

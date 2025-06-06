@@ -1,9 +1,18 @@
-﻿using Order.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using Order.Models;
+using Order.Models.Forecast;
 
 namespace Order.Services
 {
-    public class SmartPlannerService
+    public class StatisticsService
     {
+        //private readonly TaskForecastService _forecastService;
+
+        //public StatisticsService(TaskForecastService forecastService)
+        //{
+        //    _forecastService = forecastService;
+        //}
+
         // ВЫЧИСЛЕНИЕ ОПТИМАЛЬНОЙ ДАТЫ ДЛЯ НАЧАЛА ВЫПОЛНЕНИЯ ЗАДАЧИ ========================================
         public DateOnly CalculateStartDate(Models.Task task, TimeSpan avgCompletionTime)
         {
@@ -79,6 +88,41 @@ namespace Order.Services
             }
 
             return TimeSpan.FromTicks(totalTime.Ticks / completedTasks.Count);
+        }
+
+        //public async Task<object> GetUserStatistics(Guid userId)
+        //{
+        //    // 1. Получение исторических данных
+        //    var history = await _forecastService.GetTaskHistoryAsync(userId);
+
+        //    // 2. Подготовка данных для обучения
+        //    var trainingData = history.GroupBy(x => x.Date.Date)
+        //                             .Select(g => new TaskHistoryRecord
+        //                             {
+        //                                 Date = g.Key,
+        //                                 TasksCompleted = g.Count()
+        //                             })
+        //                             .OrderBy(x => x.Date)
+        //                             .ToList();
+
+        //    // 3. Обучение модели (можно кэшировать)
+        //    _forecastService.TrainModel(trainingData);
+
+        //    // 4. Получение прогноза
+        //    var forecast = _forecastService.Predict();
+
+        //    return new UserStatistics
+        //    {
+        //        // ... существующие поля
+        //        Forecast = forecast,
+        //        ForecastAccuracy = CalculateAccuracy(history, forecast)
+        //    };
+        //}
+
+        private float CalculateAccuracy(IEnumerable<TaskHistoryRecord> history, float[] forecast)
+        {
+            // Реализация оценки точности прогноза
+            return 0.95f; // Примерное значение
         }
     }
 }

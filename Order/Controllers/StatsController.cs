@@ -186,7 +186,7 @@ namespace Order.Controllers
         }
 
         [HttpGet("intellectual-planning")]
-        public async Task<IActionResult> GetPlan(Guid userId, [FromServices] SmartPlannerService plannerService)
+        public async Task<IActionResult> GetPlan(Guid userId, [FromServices] StatisticsService plannerService)
         {
             var user = await _context.Users
                 .Include(u => u.Tasks)
@@ -233,6 +233,18 @@ namespace Order.Controllers
                 DatesForTaskIds = tasksDates
             });
         }
+
+        // Прогноз завалов
+        //[HttpGet("{userId}/forecast")]
+        //public async Task<IActionResult> GetForecast(Guid userId, [FromServices] StatisticsService statisticsService)
+        //{
+        //    var stats = await statisticsService.GetUserStatistics(userId);
+        //    return Ok(new
+        //    {
+        //        Next7DaysForecast = stats.Forecast,
+        //        Accuracy = stats.ForecastAccuracy
+        //    });
+        //}
 
         //[HttpGet("distribute-tasks")]
         //public async Task<IActionResult> GetPlan2(Guid userId, [FromServices] SmartPlannerService plannerService)

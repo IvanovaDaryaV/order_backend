@@ -28,5 +28,6 @@ namespace Order.Models.DTO
         public ICollection<Task>? Tasks { get; set; } = new List<Task>();
         public ICollection<Note>? Notes { get; set; } = new List<Note>();
         public List<ProjectUser>? ProjectUsers { get; set; } = new List<ProjectUser>(); // промежуточная таблица для связи с пользователями
+        public List<Guid>? UserIds { get; set; }
     }
 }

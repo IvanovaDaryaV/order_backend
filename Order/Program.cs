@@ -13,18 +13,17 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ������� ����� ===============================================
+// Маппинг полей ===============================================
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 //==============================================================
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        ////// important
-         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
-// ����������� =================================================
+// Авторизация =================================================
 //builder.Services.AddIdentity<User, IdentityRole<Guid>>()
 //    .AddEntityFrameworkStores<ApplicationDbContext>()
 //    .AddDefaultTokenProviders();
@@ -42,7 +41,7 @@ builder.Configuration.AddEnvironmentVariables();
 //}
 
 builder.Services.AddScoped<ScheduleSharingService>();
-builder.Services.AddScoped<SmartPlannerService>();
+builder.Services.AddScoped<StatisticsService>();
 
 builder.Services.AddScoped<MainService>()
     .AddAuthentication(options =>
@@ -89,7 +88,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-//������������ ������ $id/$ref ������ ��������
+//Сериализация ссылок $id/$ref вместо объектов
 //builder.Services.AddControllers().AddJsonOptions(options =>
 //{
 //    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
@@ -110,7 +109,7 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Scheme = "Bearer",
         BearerFormat = "JWT",
-        Description = "������� ����� � ������� 'Bearer {�����}'"
+        Description = "Введите токен в формате 'Bearer {токен}'"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -150,11 +149,11 @@ if (app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 
-// ��� ������ ������� �������������� ���������� �������� + �������� ��, ���� �� �� ����������
+// при каждом запуске автоматическое применение миграций + создание БД, если ее не существует
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate(); // <-- ��������� ��� ��������
+    context.Database.Migrate(); // <-- применяет все миграции
 }
 
 app.UseAuthentication();

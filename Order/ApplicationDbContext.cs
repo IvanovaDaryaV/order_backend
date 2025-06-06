@@ -59,6 +59,15 @@ namespace Order
                 .WithMany(u => u.ProjectUsers)
                 .HasForeignKey(pu => pu.UserId);
             //============================================================
+            modelBuilder.Entity<User>(user =>
+            {
+                user.HasKey(user => user.UserId);
+                user.Property(u => u.UserId)
+                .HasColumnType("uuid")
+                .HasDefaultValueSql("gen_random_uuid()"); // Автогенерация UUID в БД;
+            });
+
+
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Events)
                 .WithOne(e => e.User)
