@@ -31,12 +31,19 @@ namespace Order.Controllers
             var user = await _context.Users
                 .Include(u => u.Tasks)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
-            if (user == null)
-                return NotFound();
-
             var tasks = user.Tasks;
-            if (tasks == null)
-                return NotFound();
+
+            if (tasks == null || user == null) {
+                var emptyResult = new
+                {
+                    TasksTotal = 0,
+                    TasksCompleted = 0,
+                    TasksOverdue = 0,
+                    AverageCompletionDelayHours = 0,
+                    CompletionRatePerDay = 0
+                };
+                return Ok(emptyResult);
+            }
 
             // Получение статистики
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
