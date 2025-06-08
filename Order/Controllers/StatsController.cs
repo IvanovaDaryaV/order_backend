@@ -6,6 +6,9 @@ using System.Text;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using Order.Services;
+using System.Threading.Tasks;
+using Ical.Net.CalendarComponents;
+using System.Net.Http;
 
 /*
  Контроллер для аналитики (статистика по выполнению задач пользователя)
@@ -17,70 +20,79 @@ namespace Order.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly HttpClient _httpClient;
 
-        public StatsController(ApplicationDbContext context, IMapper mapper)
+        public StatsController(ApplicationDbContext context, IMapper mapper, HttpClient httpClient)
         {
             _context = context;
             _mapper = mapper;
+            _httpClient = httpClient;
+            _httpClient.BaseAddress = new Uri("http://localhost:8000");
         }
 
         // Основной эндпоинт общей статистики
-        [HttpGet("overview")]
+        [HttpGet("/api/overview")]
         public async Task<IActionResult> GetStats(Guid userId)
         {
-            var user = await _context.Users
+            ICollection<Models.Task> tasks;
+            try
+            {
+                var user = await _context.Users
                 .Include(u => u.Tasks)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
-            var tasks = user.Tasks;
-
-            if (tasks == null || user == null) {
-                var emptyResult = new
-                {
-                    TasksTotal = 0,
-                    TasksCompleted = 0,
-                    TasksOverdue = 0,
-                    AverageCompletionDelayHours = 0,
-                    CompletionRatePerDay = 0
-                };
-                return Ok(emptyResult);
+                tasks = user.Tasks;
             }
-
-            // Получение статистики
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-
-            var tasksCompleted = tasks.Where(t => t.DateDone.HasValue).ToList();
-            var overdueTasks = tasks.Where(t =>
-                    !t.DateDone.HasValue &&
-                    t.HardDeadline.HasValue &&
-                    t.HardDeadline.Value < today
-                );
-
-            var avgDelay = tasksCompleted
-                .Where(t => t.HardDeadline != null && t.DateDone != null)
-                .Select(t => (t.DateDone.Value.Date - t.HardDeadline.Value.ToDateTime(TimeOnly.MinValue)).TotalHours)
-                .DefaultIfEmpty()
-                .Average();
-
-            var completionRate = tasksCompleted
-                .GroupBy(t => t.DateDone.Value.DayOfWeek)
-                .ToDictionary(
-                    g => g.Key.ToString(),
-                    g => g.Count()
-                );
-
-            var result = new
+            catch(NullReferenceException)
             {
-                TasksTotal = tasks.Count,
-                TasksCompleted = tasksCompleted.Count,
-                TasksOverdue = overdueTasks.Count(),
-                AverageCompletionDelayHours = Math.Round(avgDelay, 2),
-                CompletionRatePerDay = completionRate
-            };
+                return Ok(new { });
+            }
+            if (tasks.Count != 0)
+            {
+                // Получение статистики
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            return Ok(result);
+                //var tasksCompleted = tasks.Where(t => t.DateDone.HasValue).ToList();
+                var tasksCompleted = tasks.Where(t => t.Status == true).ToList();
+                var overdueTasks = tasks.Where(t =>
+                        //!t.DateDone.HasValue &&
+                        t.Status == false &&
+                        t.HardDeadline.HasValue &&
+                        t.HardDeadline.Value < today
+                    );
+
+                var avgDelay = tasksCompleted
+                    //.Where(t => t.HardDeadline != null && t.DateDone != null)
+                    .Where(t => t.Status == true)
+                    .Select(t => (t.DateDone.Value.Date - t.HardDeadline.Value.ToDateTime(TimeOnly.MinValue)).TotalHours)
+                    .DefaultIfEmpty()
+                    .Average();
+
+                var completionRate = tasksCompleted
+                    .GroupBy(t => t.DateDone.Value.DayOfWeek)
+                    .ToDictionary(
+                        g => g.Key.ToString(),
+                        g => g.Count()
+                    );
+
+                var result = new
+                {
+                    TasksTotal = tasks.Count,
+                    TasksCompleted = tasksCompleted.Count,
+                    TasksOverdue = overdueTasks.Count(),
+                    AverageCompletionDelayHours = Math.Round(avgDelay, 2),
+                    CompletionRatePerDay = completionRate
+                };
+
+                return Ok(result);
+            }
+            else
+            {
+                return Ok(new { });
+            }
+            
         }
 
-        [HttpGet("heatmap")]
+        [HttpGet("/api/heatmap")]
         public async Task<IActionResult> GetHeatmap(Guid userId)
         {
             var user = await _context.Users
@@ -112,7 +124,7 @@ namespace Order.Controllers
         }
 
         // Рекомендации
-        [HttpGet("recommendations")]
+        [HttpGet("/api/recommendations")]
         public async Task<IActionResult> GetRecommendations(Guid userId)
         {
             var user = await _context.Users
@@ -192,7 +204,7 @@ namespace Order.Controllers
             });
         }
 
-        [HttpGet("intellectual-planning")]
+        [HttpGet("/api/intellectual-planning")]
         public async Task<IActionResult> GetPlan(Guid userId, [FromServices] StatisticsService plannerService)
         {
             var user = await _context.Users
@@ -274,5 +286,17 @@ namespace Order.Controllers
         //    // Составление оптимального расписания для пользователя
         //    return Ok(plannerService.DistributeTasks(tasks.ToList(), avgCompletionTime));
         //}
+
+        // Вычисление риска просрочки задачи
+        [HttpGet("/api/risk")]
+        public async Task<IActionResult> GetTaskRisk(Guid userId, int taskId, [FromServices] StatisticsService statService)
+        {
+            var task = await _context.Tasks
+                .FirstOrDefaultAsync(t => t.TaskId == taskId);
+
+            var risk = await statService.GetOverdueProbability(task, userId);
+
+            return Ok(new { taskId, riskScore = risk });
+        }
     }
 }

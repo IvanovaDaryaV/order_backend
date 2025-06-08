@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Ical.Net.CalendarComponents;
+using MailKit;
+using Microsoft.AspNetCore.Mvc;
 using Order.Models;
 using Order.Models.Forecast;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Order.Services
 {
@@ -12,6 +17,14 @@ namespace Order.Services
         //{
         //    _forecastService = forecastService;
         //}
+
+        private readonly HttpClient _httpClient;
+
+        public StatisticsService(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+            _httpClient.BaseAddress = new Uri("http://localhost:8000");
+        }
 
         // ВЫЧИСЛЕНИЕ ОПТИМАЛЬНОЙ ДАТЫ ДЛЯ НАЧАЛА ВЫПОЛНЕНИЯ ЗАДАЧИ ========================================
         public DateOnly CalculateStartDate(Models.Task task, TimeSpan avgCompletionTime)
@@ -119,10 +132,65 @@ namespace Order.Services
         //    };
         //}
 
-        private float CalculateAccuracy(IEnumerable<TaskHistoryRecord> history, float[] forecast)
+        public async Task<string> GetOverdueProbability(Models.Task task, Guid userId)
         {
-            // Реализация оценки точности прогноза
-            return 0.95f; // Примерное значение
+            var now = DateTime.UtcNow;
+            var today = DateOnly.FromDateTime(now);
+            var request = new
+            {
+                user_id = userId,
+                task_created = task.DateCreated?.ToString("yyyy-MM-ddTHH:mm:ss"),
+                task_deadline = task.HardDeadline?.ToString("yyyy-MM-dd"),
+                task_completed = task.Status,
+                priority = (int)task.Priority
+            };
+            Console.WriteLine(request);
+            var response = await _httpClient.PostAsJsonAsync("/predict", request);
+            //Console.WriteLine(response);
+
+            var rawJson = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("RAW JSON ОТВЕТ:");
+            Console.WriteLine(rawJson);
+
+            var result = await response.Content.ReadFromJsonAsync<Dictionary<string, double>>();
+            return $"Вероятность просрочки задачи: {result["probability"]}";
+
+            //var user = await _context.Users
+            //    .Include(u => u.Tasks)
+            //    .FirstOrDefaultAsync(u => u.UserId == userId);
+            //if (user == null)
+            //    return NotFound();
+
+            //var tasks = user.Tasks;
+            //var task = await _context.Tasks
+            //    .FirstOrDefaultAsync(t => t.TaskId == taskId);
+            //var now = DateTime.UtcNow;
+            //var today = DateOnly.FromDateTime(now);
+
+            //if (task == null)
+            //    return NotFound();
+
+            //var overdueTasks = tasks.Where(t =>
+            //        !t.DateDone.HasValue &&
+            //        t.HardDeadline.HasValue &&
+            //        t.HardDeadline.Value < today
+            //    );
+
+            //using var client = new HttpClient();
+
+            //var response = await client.PostAsJsonAsync(
+            //    "http://python-server:8000/predict",
+            //    new
+            //    {
+            //        task_created = task.DateCreated.Value.ToString("yyyy-MM-dd"),
+            //        task_deadline = task.HardDeadline.Value.ToString("yyyy-MM-dd"),
+            //        priority = (int)task.Priority,
+            //        user_past_overdue_rate = overdueTasks.Count() / tasks.Count()
+            //    });
+
+            //var result = await response.Content.ReadFromJsonAsync<Dictionary<string, double>>();
+            //return Ok(result["overdue_probability"]);
         }
+
     }
 }
