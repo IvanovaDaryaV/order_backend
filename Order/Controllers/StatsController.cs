@@ -87,6 +87,14 @@ namespace Order.Controllers
             }
             else
             {
+                //return Ok(new
+                //{
+                //    TasksTotal = 0,
+                //    TasksCompleted = 0,
+                //    TasksOverdue = 0,
+                //    AverageCompletionDelayHours = 0,
+                //    CompletionRatePerDay = 0
+                //});
                 return Ok(new { });
             }
             

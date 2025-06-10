@@ -168,6 +168,11 @@ namespace Order.Controllers.EntitiesControllers
                 //    }
                 //}
 
+                if (updatedTask.Status == true)
+                {
+                    updatedTask.DateDone = DateTime.Now;
+                }
+
                 _mapper.Map(updatedTask, task);
 
                 // Валидация
