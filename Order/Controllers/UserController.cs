@@ -112,7 +112,7 @@ public class UserController : ControllerBase
    // GET: api/User/qrCode/{id}
     [HttpGet("qrCode")]
     [Authorize]
-    public async Task<IActionResult> GetQrToken()
+    public async Task<IActionResult> GetQrToken(MainService service)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -121,7 +121,7 @@ public class UserController : ControllerBase
         var user = await _context.Users.FindAsync(Guid.Parse(userId));
         if (user == null) return Unauthorized("Invalid user");
 
-        var shortToken = GenerateShortLivedToken(user);
+        var shortToken = service.GenerateShortLivedToken(user);
 
         return Ok(new { shortToken });
     }
@@ -133,28 +133,6 @@ public class UserController : ControllerBase
         var user = await _context.Users.FindAsync(Guid.Parse(userId));
         var token = GenerateJwtToken(user);
         return Ok(new { token });
-    }
-
-    /// Даша, перепиши этот метод, чтобы не было дублирования 
-    private string GenerateShortLivedToken(User user) { 
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Email, user.Email)
-        };
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Алгоритм подписи
-        
-        var token = new JwtSecurityToken(
-            issuer: _configuration["JwtSettings:Issuer"],
-            audience: _configuration["JwtSettings:Audience"],
-            claims: claims,
-            expires: DateTime.Now.AddMinutes(3),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     private string GenerateJwtToken(User user)
