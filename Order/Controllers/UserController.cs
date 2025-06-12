@@ -70,7 +70,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> LoginUser([FromBody] AuthModel model)
+    public async Task<IActionResult> LoginUser([FromBody] AuthModel model, MainService service)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
         if (user == null)
@@ -80,7 +80,7 @@ public class UserController : ControllerBase
         if (passwordVerificationResult != PasswordVerificationResult.Success)
             return Unauthorized("Invalid email or password");
 
-        var token = GenerateJwtToken(user);
+        var token = service.GenerateJwtToken(user, false);
 
         return Ok(new { 
             user,
@@ -121,41 +121,19 @@ public class UserController : ControllerBase
         var user = await _context.Users.FindAsync(Guid.Parse(userId));
         if (user == null) return Unauthorized("Invalid user");
 
-        var shortToken = service.GenerateShortLivedToken(user);
+        var shortToken = service.GenerateJwtToken(user, true);
 
         return Ok(new { shortToken });
     }
 
     [HttpPost("validate")]
     [Authorize]
-    public async Task<IActionResult> validateShortToken() {
+    public async Task<IActionResult> validateShortToken(MainService service) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var user = await _context.Users.FindAsync(Guid.Parse(userId));
-        var token = GenerateJwtToken(user);
+        var token = service.GenerateJwtToken(user, true);
         return Ok(new { token });
     }
 
-    private string GenerateJwtToken(User user)
-    {
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Email, user.Email)
-        };
-        //var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_key")));
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Алгоритм подписи
-        
-        var token = new JwtSecurityToken(
-            issuer: _configuration["JwtSettings:Issuer"],
-            audience: _configuration["JwtSettings:Audience"],
-            claims: claims,
-            expires: DateTime.Now.AddHours(1),
-            signingCredentials: creds
-        );
-
-        Console.WriteLine(token);
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
+    
 }

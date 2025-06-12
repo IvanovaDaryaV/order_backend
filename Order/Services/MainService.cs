@@ -18,7 +18,7 @@ public class MainService
         _context = context;
         _configuration = configuration;
     }
-    public string GenerateShortLivedToken(User user)
+    public string GenerateJwtToken(User user, bool isShortLived)
     {
         var claims = new[]
         {
@@ -26,17 +26,29 @@ public class MainService
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Email, user.Email)
         };
+        //var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_key")));
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Алгоритм подписи
+
+        DateTime expires_time;
+        if (isShortLived)
+        {
+            expires_time = DateTime.Now.AddMinutes(3);
+        }
+        else
+        {
+            expires_time = DateTime.Now.AddHours(1);
+        }
 
         var token = new JwtSecurityToken(
             issuer: _configuration["JwtSettings:Issuer"],
             audience: _configuration["JwtSettings:Audience"],
             claims: claims,
-            expires: DateTime.Now.AddMinutes(3),
+            expires: expires_time,
             signingCredentials: creds
-        );
+            );
 
+        //Console.WriteLine(token);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
