@@ -9,6 +9,7 @@ using Order.Services;
 using System.Threading.Tasks;
 using Ical.Net.CalendarComponents;
 using System.Net.Http;
+using Org.BouncyCastle.Asn1;
 
 /*
  Контроллер для аналитики (статистика по выполнению задач пользователя)
@@ -261,18 +262,7 @@ namespace Order.Controllers
             });
         }
 
-        // Прогноз завалов
-        //[HttpGet("{userId}/forecast")]
-        //public async Task<IActionResult> GetForecast(Guid userId, [FromServices] StatisticsService statisticsService)
-        //{
-        //    var stats = await statisticsService.GetUserStatistics(userId);
-        //    return Ok(new
-        //    {
-        //        Next7DaysForecast = stats.Forecast,
-        //        Accuracy = stats.ForecastAccuracy
-        //    });
-        //}
-
+       
         //[HttpGet("distribute-tasks")]
         //public async Task<IActionResult> GetPlan2(Guid userId, [FromServices] SmartPlannerService plannerService)
         //{
@@ -296,15 +286,59 @@ namespace Order.Controllers
         //}
 
         // Вычисление риска просрочки задачи
-        [HttpGet("/api/risk")]
-        public async Task<IActionResult> GetTaskRisk(Guid userId, int taskId, [FromServices] StatisticsService statService)
+        //[HttpGet("/api/risk")]
+        //public async Task<IActionResult> GetTaskRisk(Guid userId, int taskId, [FromServices] StatisticsService statService)
+        //{
+        //    var task = await _context.Tasks
+        //        .FirstOrDefaultAsync(t => t.TaskId == taskId);
+
+        //    var risk = await statService.GetOverdueProbability(task, userId);
+
+        //    return Ok(new { taskId, riskScore = risk });
+        //}
+
+
+        // Вычисление возможных завалов на 30 дней вперед
+        [HttpGet("/api/overload-prediction-ML")]
+        public async Task<IActionResult> GetOverloadPrediction(Guid userId, string targetDateString, [FromServices] StatisticsService statService)
         {
-            var task = await _context.Tasks
-                .FirstOrDefaultAsync(t => t.TaskId == taskId);
+            var user = await _context.Users
+               .Include(u => u.Tasks)
+               .FirstOrDefaultAsync(u => u.UserId == userId);
+            var tasks = user.Tasks.ToList();
 
-            var risk = await statService.GetOverdueProbability(task, userId);
+            if (!DateOnly.TryParseExact(targetDateString, "dd.MM.yyyy", out var targetDate))
+                return BadRequest("Неверный формат даты. Используйте dd.MM.yyyy");
+            //Console.WriteLine(targetDate);
 
-            return Ok(new { taskId, riskScore = risk });
+            try
+            {
+                var risk = await statService.GetOverloadPrediction(tasks, targetDate);
+
+                return Ok(new { riskScore = risk });
+            }
+            catch (Exception ex) { 
+                return BadRequest("Прежде чем получить предсказание, необходимо обучить модель. Отправьте запрос на эндпоинт /api/fit-model-ML");
+            }
+            
+        }
+
+        // Метод для генерации данных и обучения модели
+        [HttpGet("/api/fit-model-ML")]
+        public async Task<IActionResult> fitModel()
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("/train-model", new { });
+                var rawJson = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("RAW JSON:");
+                Console.WriteLine(rawJson);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

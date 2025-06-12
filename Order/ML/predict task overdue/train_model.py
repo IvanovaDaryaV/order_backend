@@ -1,34 +1,3 @@
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.metrics import classification_report
-# import joblib
-#
-# from prepare_data import X_train, X_test, y_train, y_test
-#
-# def train_and_evaluate(X_train, X_test, y_train, y_test):
-#     """Обучение и оценка модели"""
-#     model = RandomForestClassifier(
-#         n_estimators=100,
-#         max_depth=5,
-#         random_state=42
-#     )
-#
-#     model.fit(X_train, y_train)
-#
-#     # Оценка
-#     predictions = model.predict(X_test)
-#     print(classification_report(y_test, predictions))
-#
-#     # Важность фич
-#     print("Feature importances:", dict(zip(X_train.columns, model.feature_importances_)))
-#
-#     # Сохранение модели
-#     joblib.dump(model, "overdue_predictor.joblib")
-#     return model
-#
-#
-# # Использование:
-# model = train_and_evaluate(X_train, X_test, y_train, y_test)
-
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 import joblib

@@ -1,0 +1,7 @@
+📊 Сравнительный отчёт по моделям для прогноза завалов
+
+              Model  Accuracy  Precision  Recall  F1 Score  ROC AUC
+Logistic Regression     0.937      1.000   0.828     0.906    0.913
+      Decision Tree     0.878      0.831   0.837     0.834    0.870
+      Random Forest     0.925      0.959   0.831     0.890    0.902
+  Gradient Boosting     0.936      0.998   0.828     0.905    0.913
