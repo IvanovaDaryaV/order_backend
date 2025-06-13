@@ -166,7 +166,7 @@ namespace Order.Controllers.EntitiesControllers
                 _context.Notes.Remove(note);
                 await _context.SaveChangesAsync();
 
-                return NoContent();
+                return Ok();
             }
             catch (ArgumentException ex)
             {
