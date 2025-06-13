@@ -222,7 +222,7 @@ namespace Order.Controllers
             if (user == null)
                 return NotFound();
 
-            var tasks = user.Tasks;
+            var tasks = user.Tasks.ToList();
             if (tasks == null)
                 return NotFound();
 
@@ -235,19 +235,23 @@ namespace Order.Controllers
             string tmp = string.Empty;
             //List<DateOnly> dates = new List<DateOnly>();
             //List<int> taskIds = new List<int>();
-            Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
-            foreach (Models.Task task in tasks)
-            {
-                if (task.HardDeadline != null && task.DateDone == null)
-                {
-                    tasksDates.Add(task.TaskId, plannerService.CalculateStartDate(task, avgCompletionTime));
 
-                    //tmp += $"\n{task.Name}: " +
-                    //    $"{date} " +
-                    //    $"(жесткий дедлайн: {task.HardDeadline}, приоритет задачи: {(task.Priority == null ? 0 : task.Priority)}) " +
-                    //    $"итого нужно начать за {task.HardDeadline.Value.DayNumber - date.DayNumber} дней";
-                }
-            }
+            //Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
+
+            var tasksDates = plannerService.CalculateStartDate(tasks, avgCompletionTime);
+
+            //foreach (Models.Task task in tasks)
+            //{
+            //    if (task.HardDeadline != null && task.DateDone == null)
+            //    {
+            //        tasksDates.Add(task.TaskId, plannerService.CalculateStartDate(task, avgCompletionTime));
+
+            //        //tmp += $"\n{task.Name}: " +
+            //        //    $"{date} " +
+            //        //    $"(жесткий дедлайн: {task.HardDeadline}, приоритет задачи: {(task.Priority == null ? 0 : task.Priority)}) " +
+            //        //    $"итого нужно начать за {task.HardDeadline.Value.DayNumber - date.DayNumber} дней";
+            //    }
+            //}
 
             //return Ok($"Среднее время выполнения задач для пользователя {userId}: {avgCompletionTime.ToString().Split('.')[0]} дней, {avgCompletionTime.ToString().Split('.')[1]} часов. " +
             //    $"\n\n" +

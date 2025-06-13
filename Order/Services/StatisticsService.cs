@@ -28,23 +28,48 @@ namespace Order.Services
         }
 
         // ВЫЧИСЛЕНИЕ ОПТИМАЛЬНОЙ ДАТЫ ДЛЯ НАЧАЛА ВЫПОЛНЕНИЯ ЗАДАЧИ ========================================
-        public DateOnly CalculateStartDate(Models.Task task, TimeSpan avgCompletionTime)
+        public Dictionary<int, DateOnly> CalculateStartDate(List<Models.Task> tasks, TimeSpan avgCompletionTime)
         {
-            // Базовый буфер: 1.5 * среднее время выполнения
             double bufferDays = avgCompletionTime.TotalDays * 1.5;
+            int max_tasks_per_day = 5;
 
-            // Корректировка на приоритет (чем выше, тем раньше начинаем)
-            // 1 - высокий приоритет, 3 - низкий
-            if (task.Priority != null)
+            Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
+            Dictionary<DateOnly, int> dateTaskCounts = new Dictionary<DateOnly, int>();
+
+            foreach (Models.Task task in tasks)
             {
-                bufferDays *= (double)((4 - task.Priority) * 0.3); // Коэффициент
+                if (task.HardDeadline != null && task.DateDone == null)
+                {
+                    double adjustedBufferDays = bufferDays;
+
+                    // Корректировка на приоритет
+                    if (task.Priority != null)
+                    {
+                        adjustedBufferDays *= (double)((4 - task.Priority) * 0.3);
+                    }
+
+                    var finalDate = task.HardDeadline.Value.AddDays((int)-adjustedBufferDays);
+
+                    // Поиск ближайшей даты с количеством задач < max_tasks_per_day
+                    while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                    {
+                        finalDate = finalDate.AddDays(-1);
+                    }
+
+                    tasksDates.Add(task.TaskId, finalDate);
+
+                    if (dateTaskCounts.ContainsKey(finalDate))
+                    {
+                        dateTaskCounts[finalDate]++;
+                    }
+                    else
+                    {
+                        dateTaskCounts[finalDate] = 1;
+                    }
+                }
             }
 
-            // Учет прокрастинации пользователя (+20% если часто откладывает)
-            //if (avgDelayTime > 2)
-            //    bufferDays *= 1.2;
-
-            return task.HardDeadline.Value.AddDays((int)-bufferDays);
+            return tasksDates;
         }
 
         // Метод распределения задач по календарю без перегрузки
