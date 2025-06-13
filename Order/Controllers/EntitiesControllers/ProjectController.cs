@@ -5,7 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Order.Models;
 using Order.Models.DTO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 
 namespace Order.Controllers.EntitiesControllers
 {
@@ -78,6 +82,50 @@ namespace Order.Controllers.EntitiesControllers
             return Ok(result);
         }
 
+        [HttpPost("link-preview")]
+        public async Task<IActionResult> GetLinkPreviews([FromBody] List<string> urls)
+        {
+            var httpClient = new HttpClient();
+            var links = urls.Select(async url =>
+            {
+            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            {
+                return new {
+                    url,
+                    title = "Invalid URL",
+                    description = "",
+                    image = ""
+                };
+            }
+
+            try
+            {
+                var html = await httpClient.GetStringAsync(url);
+                string title = Regex.Match(html, @"<title>(.*?)<\/title>", RegexOptions.IgnoreCase | RegexOptions.Singleline).Groups[1].Value;
+                string description = Regex.Match(html, @"<meta\s+name\s*=\s*[""']description[""']\s+content\s*=\s*[""'](.*?)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+                string image = Regex.Match(html, @"<meta\s+property\s*=\s*[""']og:image[""']\s+content\s*=\s*[""'](.*?)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+
+                return new {
+                    url,
+                    title = string.IsNullOrWhiteSpace(title) ? "No title" : title,
+                    description,
+                    image
+                };
+            }
+            catch
+            {
+                return new {
+                    url,
+                    title = "Error loading",
+                    description = "",
+                    image = ""
+                };
+            }
+        });
+
+            var results = await System.Threading.Tasks.Task.WhenAll(links);
+            return Ok(results);
+        }
 
         // POST: api/Project
         [HttpPost]
