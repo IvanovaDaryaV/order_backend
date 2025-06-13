@@ -58,28 +58,28 @@ namespace Order.Controllers.EntitiesControllers
                 .Include(p => p.ProjectUsers)
                 .ToListAsync(); 
 
-            var result = projects.Select(project => new ProjectDto
-            {
-                ProjectId = project.ProjectId,
-                Description = project.Description,
-                Priority = project.Priority,
-                ContextId = project.ContextId,
-                HardDeadline = project.HardDeadline,
-                SoftDeadline = project.SoftDeadline,
-                Status = project.Status,
-                OwnerId = project.OwnerId,
-                Events = project.Events,
-                Tasks = project.Tasks,
-                Notes = project.Notes,
-                UserIds = project.ProjectUsers.Select(pu => pu.UserId).ToList()
-            }).ToList();
+            //var result = projects.Select(project => new ProjectDto
+            //{
+            //    ProjectId = project.ProjectId,
+            //    Description = project.Description,
+            //    Priority = project.Priority,
+            //    ContextId = project.ContextId,
+            //    HardDeadline = project.HardDeadline,
+            //    SoftDeadline = project.SoftDeadline,
+            //    Status = project.Status,
+            //    OwnerId = project.OwnerId,
+            //    Events = project.Events,
+            //    Tasks = project.Tasks,
+            //    Notes = project.Notes,
+            //    UserIds = project.ProjectUsers.Select(pu => pu.UserId).ToList()
+            //}).ToList();
 
-            if (!result.Any())
+            if (!projects.Any())
             {
                 return NotFound("Для данного userId не найдены привязанные к нему проекты");
             }
 
-            return Ok(result);
+            return Ok(projects);
         }
 
         [HttpPost("link-preview")]

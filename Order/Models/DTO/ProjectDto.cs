@@ -6,10 +6,10 @@ namespace Order.Models.DTO
 {
     public class ProjectDto
     {
-        [Key]
-        [Required]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ProjectId { get; set; }
+        //[Key]
+        //[Required]
+        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        //public int ProjectId { get; set; }
         public string? Description { get; set; }
         public int? Priority { get; set; }
         public int? ContextId { get; set; }
