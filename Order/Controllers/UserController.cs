@@ -10,6 +10,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Order.Models.DTO;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -135,5 +136,15 @@ public class UserController : ControllerBase
         return Ok(new { token });
     }
 
-    
+
+    [HttpPatch("settings")]  // частичное обновление для настроек
+    [Authorize]
+    public async Task<IActionResult> UpdateSettings([FromBody] UserSettingsDto settings, MainService service)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        await service.UpdateUserSettingsAsync(Guid.Parse(userId), settings.Theme, settings.Language);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }

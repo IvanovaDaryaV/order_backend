@@ -92,5 +92,18 @@ public class MainService
         }
     }
 
+    // обновление настроек пользователя
+    public async System.Threading.Tasks.Task UpdateUserSettingsAsync(Guid userId, string? theme, string? language)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) throw new Exception("Пользователь не найден");
 
+        if (!string.IsNullOrEmpty(theme))
+            user.Theme = theme;
+
+        if (!string.IsNullOrEmpty(language))
+            user.Language = language;
+
+        await _context.SaveChangesAsync();
+    }
 }

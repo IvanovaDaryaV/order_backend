@@ -77,15 +77,15 @@ def generate_data():
     data = []
     threshold = 0.7
 
-    for i in range(10000):  # Увеличим число дней для выборки
+    for i in range(10000):
         day = start_date + timedelta(days=i)
 
-        # Искусственно создаем больше случаев с завалом (30% примерно)
+        # искусственное повышение случаев с завалом (30% примерно)
         is_zaval = np.random.rand() < 0.3
 
         if is_zaval:
-            overdue_last_3d = np.random.randint(3, 6)  # Больше просрочек
-            high_priority = np.random.randint(3, 6)    # Много важных задач
+            overdue_last_3d = np.random.randint(3, 6)
+            high_priority = np.random.randint(3, 6)
             active_tasks = np.random.randint(8, 12)
         else:
             overdue_last_3d = np.random.randint(0, 3)
@@ -95,8 +95,6 @@ def generate_data():
         tasks_created = np.random.poisson(4)
         avg_duration = np.round(np.random.uniform(1.5, 5.0), 2)
 
-        score = 0.4 * overdue_last_3d + 0.3 * high_priority + 0.3 * active_tasks
-        # label = int(int(score > threshold) - 0.2)
         label = int((overdue_last_3d >= 3 and active_tasks >= 8) or np.random.rand() < 0.1)
 
         data.append([

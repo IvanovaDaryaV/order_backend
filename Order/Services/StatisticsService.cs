@@ -3,7 +3,6 @@ using Ical.Net.CalendarComponents;
 using MailKit;
 using Microsoft.AspNetCore.Mvc;
 using Order.Models;
-using Order.Models.Forecast;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -188,7 +187,7 @@ namespace Order.Services
         {
             var resultDict = new Dictionary<DateOnly, double>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < 8; i++)
             {
                 var targetDate = startDate.AddDays(i);
                 var prev3Days = targetDate.AddDays(-3);
