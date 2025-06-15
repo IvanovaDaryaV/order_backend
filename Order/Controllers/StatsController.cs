@@ -309,6 +309,30 @@ namespace Order.Controllers
             
         }
 
+        [HttpGet("api/most-overload-day-ML")]
+        public async Task<IActionResult> GetMostOverloadDay(Guid userId, string targetDateString, [FromServices] StatisticsService statService)
+        {
+            var user = await _context.Users
+               .Include(u => u.Tasks)
+               .FirstOrDefaultAsync(u => u.UserId == userId);
+            var tasks = user.Tasks.ToList();
+
+            if (!DateOnly.TryParseExact(targetDateString, "dd.MM.yyyy", out var targetDate))
+                return BadRequest("Неверный формат даты. Используйте dd.MM.yyyy");
+            //Console.WriteLine(targetDate);
+
+            try
+            {
+                var risk = await statService.GetOverloadPrediction(tasks, targetDate);
+
+                return Ok(new { riskScore = risk });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Прежде чем получить предсказание, необходимо обучить модель. Отправьте запрос на эндпоинт /api/fit-model-ML");
+            }
+        }
+
         // Метод для генерации данных и обучения модели
         [HttpGet("/api/fit-model-ML")]
         public async Task<IActionResult> fitModel()

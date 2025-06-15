@@ -36,18 +36,33 @@ namespace Order.Controllers
 
         // получение новостей с сайта
         [HttpGet]
-        public async Task<IActionResult> GetEventsTMNofficial(string instName)
+        public async Task<IActionResult> GetEventsTMNofficial(string? instName)
         {
             List<string> events = new List<string>();
+            if (instName == null)
+                instName = String.Empty;
+
             if (instName == "official")
             {
                 events = await _eventParser.GetEventsTMNofficial(InstituteNewsUrls["official"]);
             }
-            else
+            else if (InstituteNewsUrls.ContainsKey(instName))
             {
                 events = await _eventParser.GetEventsTMN(InstituteNewsUrls[instName]);
             }
-
+            else
+            {
+                List<string> result = new List<string>();
+                foreach (string url in InstituteNewsUrls.Keys)
+                {
+                    events = await _eventParser.GetEventsTMN(InstituteNewsUrls[url]);
+                    foreach (string ev in events)
+                    {
+                        result.Add(ev);
+                    }
+                }
+                return Ok(result);
+            }
             return Ok(events);
         }
 

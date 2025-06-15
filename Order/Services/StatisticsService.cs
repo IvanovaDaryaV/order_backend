@@ -52,7 +52,8 @@ namespace Order.Services
                 if (task.HardDeadline != null)
                 {
                     // Если у задачи есть срок, но он уже прошел, то не можем предложить оптимальную дату начала
-                    if (task.HardDeadline < today) {
+                    if (task.HardDeadline < today)
+                    {
                         failedToSchedule.Add(task.TaskId);
                     }
                     // У задачи есть срок и он позже сегодняшнего дня
@@ -152,7 +153,7 @@ namespace Order.Services
                                     dateTaskCounts[finalDate] = 1;
                             }
                         }
-                        
+
                     }
                 }
                 else
@@ -364,6 +365,8 @@ namespace Order.Services
 
             return resultDict;
         }
-
+        //public async Task<Dictionary<DateOnly, double>> GetMostOverloadDay(List<Models.Task> tasks, DateOnly startDate)
+        //{
+        //}
     }
 }
