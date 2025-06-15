@@ -240,8 +240,9 @@ namespace Order.Controllers
             return Ok(new
             {
                 UserId = userId,
-                AvgDays = avgCompletionTime.ToString().Split('.')[0],
-                AvgHours = avgCompletionTime.ToString().Split('.')[1],
+                AvgCompletionTime = avgCompletionTime,
+                //AvgDays = avgCompletionTime.ToString().Split('.')[0],
+                //AvgHours = avgCompletionTime.ToString().Split('.')[1],
                 DatesForTaskIds = tasksDates,
                 FailedToSchedule = failedToSchedule
             });

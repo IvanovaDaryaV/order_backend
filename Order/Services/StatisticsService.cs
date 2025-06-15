@@ -3,6 +3,7 @@ using Ical.Net.CalendarComponents;
 using MailKit;
 using Microsoft.AspNetCore.Mvc;
 using Order.Models;
+using Order.Models.DTO;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -27,9 +28,15 @@ namespace Order.Services
         }
 
         // ВЫЧИСЛЕНИЕ ОПТИМАЛЬНОЙ ДАТЫ ДЛЯ НАЧАЛА ВЫПОЛНЕНИЯ ЗАДАЧИ ========================================
-        public (Dictionary<int, DateOnly> TasksDates, List<int> FailedToSchedule) CalculateStartDate(List<Models.Task> tasks, TimeSpan avgCompletionTime)
+        public (Dictionary<int, DateOnly> TasksDates, List<int> FailedToSchedule) CalculateStartDate(List<Models.Task> tasks, AverageCompletionTime avgCompletionTime)
         {
-            double bufferDays = avgCompletionTime.TotalDays * 1.5;
+            // конвертация часов, минут, секунд в доли дня для учета буфера
+            double totalDays = avgCompletionTime.Days
+                    + avgCompletionTime.Hours / 24.0
+                    + avgCompletionTime.Minutes / 1440.0  // 24*60 = 1440
+                    + avgCompletionTime.Seconds / 86400.0; // 24*60*60 = 86400
+
+            double bufferDays = totalDays * 1.5;
             int max_tasks_per_day = 5;
 
             Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
@@ -113,6 +120,7 @@ namespace Order.Services
                                 if (finalDate < today)
                                 {
                                     successPlanningFlag = false;
+                                    finalDate = originalStart;
                                     break;
                                 }
                             }
@@ -210,10 +218,10 @@ namespace Order.Services
         // Метод подсчета среднего выполнения задач для пользователя
         // Поля даты создания и даты выполнения необязательные в БД
         // Поэтому учитываются только те задачи, у которых эти поля заполнены
-        public TimeSpan CalculateAverageCompletionTime(List<Models.Task> completedTasks)
+        public AverageCompletionTime CalculateAverageCompletionTime(List<Models.Task> completedTasks)
         {
             if (completedTasks.Count == 0)
-                return TimeSpan.Zero; // или значение по умолчанию
+                return new AverageCompletionTime(); // или значение по умолчанию
 
             var totalTime = TimeSpan.Zero;
 
@@ -224,8 +232,15 @@ namespace Order.Services
                     totalTime += task.DateDone.Value - task.DateCreated.Value;
                 }
             }
+            var average = TimeSpan.FromTicks(totalTime.Ticks / completedTasks.Count);
 
-            return TimeSpan.FromTicks(totalTime.Ticks / completedTasks.Count);
+            return new AverageCompletionTime
+            {
+                Days = average.Days,
+                Hours = average.Hours,
+                Minutes = average.Minutes,
+                Seconds = average.Seconds
+            };
         }
 
         //public async Task<object> GetUserStatistics(Guid userId)
