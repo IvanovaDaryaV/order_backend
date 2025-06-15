@@ -20,26 +20,34 @@ namespace Order.Controllers
             _context = context;
         }
 
-        // получение новостей с сайта, результат - список строк дата+название события
-        // https://www.utmn.ru/news/events/
+        private static readonly Dictionary<string, string> InstituteNewsUrls = new()
+        {
+            { "official", "https://www.utmn.ru/news/events/" }, // общие новости
+            { "igip", "https://www.utmn.ru/igip/" },            // ИГИП
+            { "scs", "https://www.utmn.ru/scs/novosti/" },      // ШКН
+            { "ihss", "https://www.utmn.ru/ihss/" },            // СОЦГУМ
+            { "ifk", "https://www.utmn.ru/ifk/" },              // институт ФИЗРЫ
+            { "riic", "https://www.utmn.ru/riic/events/" },     // рег. институт междунар. сотрудничества
+            { "fei", "https://www.utmn.ru/fei/" },              // ФЭИ
+            { "sns", "https://www.utmn.ru/sns/" },              // шк естественных наук
+            { "soe", "https://www.utmn.ru/soe/" },              // шк образования
+
+        };
+
+        // получение новостей с сайта
         [HttpGet]
-        public async Task<IActionResult> GetEventsTMNofficial(string url)
+        public async Task<IActionResult> GetEventsTMNofficial(string instName)
         {
             List<string> events = new List<string>();
-            switch (url)
+            if (instName == "official")
             {
-                case "https://www.utmn.ru/news/events/":    // общие новости
-                    {
-                        events = await _eventParser.GetEventsTMNofficial(url);
-                        break;
-                    }
-                case "https://www.utmn.ru/igip/":           // новости ИГИП
-                    {
-                        events = await _eventParser.GetEventsTMNigip(url);
-                        break;
-                    }
+                events = await _eventParser.GetEventsTMNofficial(InstituteNewsUrls["official"]);
             }
-            
+            else
+            {
+                events = await _eventParser.GetEventsTMN(InstituteNewsUrls[instName]);
+            }
+
             return Ok(events);
         }
 

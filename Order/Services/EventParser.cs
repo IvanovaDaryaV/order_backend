@@ -20,7 +20,7 @@ namespace Order.Services
         {
             _httpClient = httpClient;
         }
-
+        
         // Получение новостей с официального сайта https://www.utmn.ru/news/events/
         public async Task<List<string>> GetEventsTMNofficial(string url)
         {
@@ -68,52 +68,56 @@ namespace Order.Services
             return events;
         }
 
-        // Получение новостей ИГИП https://www.utmn.ru/igip/
-        public async Task<List<string>> GetEventsTMNigip(string url)
+        // Получение новостей ИГИП, ШКН
+        public async Task<List<string>> GetEventsTMN(string link)
         {
             var events = new List<string>();
 
-            for (int page = 1; page <= 5; page++)
+            //for (int page = 1; page <= 5; page++)
+            //{
+                //instName = $"https://www.utmn.ru/igip/?PAGEN_1={page}";
+
+            var response = await _httpClient.GetAsync(link);
+            var pageHtml = await response.Content.ReadAsStringAsync();
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(pageHtml);
+
+            events = new List<string>();
+
+            // XPath для поиска блоков с событиями
+            var eventNodes = htmlDoc.DocumentNode.SelectNodes("//div[contains(@class, 'news-item')]");
+            if (eventNodes != null)
             {
-                url = $"https://www.utmn.ru/igip/?PAGEN_1={page}";
-                var response = await _httpClient.GetAsync(url);
-                var pageHtml = await response.Content.ReadAsStringAsync();
-                var htmlDoc = new HtmlDocument();
-
-
-                events = new List<string>();
-
-                // XPath для поиска блоков с событиями
-                var eventNodes = htmlDoc.DocumentNode.SelectNodes("//div[contains(@class, 'news-item')]");
-                if (eventNodes != null)
+                foreach (var eventNode in eventNodes)
                 {
-                    foreach (var eventNode in eventNodes)
+                    var textNode = eventNode.SelectSingleNode(".//div[contains(@class, 'news-item_text')]");
+                    if (textNode == null) continue;
+
+                    var dateNode = textNode.SelectSingleNode(".//span[contains(@class, 'news-item__date')]");
+                    var titleNode = textNode.SelectSingleNode(".//h4");
+                    var extraTextNode = textNode.SelectSingleNode(".//p");
+
+                    var date = dateNode?.InnerText.Trim();
+                    var title = titleNode?.InnerText.Trim();
+                    var extra = extraTextNode?.InnerText.Trim();
+
+                    if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
                     {
-                        var textNode = eventNode.SelectSingleNode(".//div[contains(@class, 'news-item_text')]");
-                        if (textNode == null) continue;
-
-                        var dateNode = textNode.SelectSingleNode(".//span[contains(@class, 'news-item__date')]");
-                        var titleNode = textNode.SelectSingleNode(".//h4");
-
-                        var date = dateNode?.InnerText.Trim();
-                        var title = titleNode?.InnerText.Trim();
-
-                        if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
-                        {
-                            events.Add($"{date}: {title}");
-                        }
+                        events.Add($"{date}: {title}. {extra}");
                     }
                 }
-                else
-                {
-                    Console.WriteLine("События не найдены на странице.");
-                }
-                foreach (var ev in events)
-                {
-                    Console.WriteLine(ev);
-                }
             }
+            else
+            {
+                Console.WriteLine("События не найдены на странице.");
+            }
+            foreach (var ev in events)
+            {
+                Console.WriteLine(ev);
+            }
+            
             return events;
         }
+
     }
 }
