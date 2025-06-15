@@ -214,7 +214,7 @@ namespace Order.Controllers
         }
 
         [HttpGet("/api/intellectual-planning")]
-        public async Task<IActionResult> GetPlan(Guid userId, [FromServices] StatisticsService plannerService)
+        public async Task<IActionResult> GetPlan(Guid userId, [FromServices] StatisticsService statService)
         {
             var user = await _context.Users
                 .Include(u => u.Tasks)
@@ -227,42 +227,23 @@ namespace Order.Controllers
                 return NotFound();
 
             var completedTasks = tasks.Where(t => t.DateDone != null);
+            var notCompletedTasks = tasks.Where(t => t.DateDone == null).ToList();
 
             // Подсчет среднего времени выполнения задач пользователем
-            var avgCompletionTime = plannerService.CalculateAverageCompletionTime(completedTasks.ToList());
+            var avgCompletionTime = statService.CalculateAverageCompletionTime(completedTasks.ToList());
 
-            // Подсчет оптимального времени начала для каждой задачи
-            string tmp = string.Empty;
-            //List<DateOnly> dates = new List<DateOnly>();
-            //List<int> taskIds = new List<int>();
+            var (tasksDates, failedToSchedule) = statService.CalculateStartDate(notCompletedTasks, avgCompletionTime);
 
-            //Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
-
-            var tasksDates = plannerService.CalculateStartDate(tasks, avgCompletionTime);
-
-            //foreach (Models.Task task in tasks)
-            //{
-            //    if (task.HardDeadline != null && task.DateDone == null)
-            //    {
-            //        tasksDates.Add(task.TaskId, plannerService.CalculateStartDate(task, avgCompletionTime));
-
-            //        //tmp += $"\n{task.Name}: " +
-            //        //    $"{date} " +
-            //        //    $"(жесткий дедлайн: {task.HardDeadline}, приоритет задачи: {(task.Priority == null ? 0 : task.Priority)}) " +
-            //        //    $"итого нужно начать за {task.HardDeadline.Value.DayNumber - date.DayNumber} дней";
-            //    }
-            //}
-
-            //return Ok($"Среднее время выполнения задач для пользователя {userId}: {avgCompletionTime.ToString().Split('.')[0]} дней, {avgCompletionTime.ToString().Split('.')[1]} часов. " +
-            //    $"\n\n" +
-            //    $"Рекомендованные даты для начала задач: {tmp}");
-            
+            // avgDays + avgHours = среднее время выполнения задач по всей истории пользователя, в днях и часах
+            // то есть дней может не быть, если пользователь быстро выполняет задачи, в пределах суток
+            // разбито на две переменные для удобства отображения
             return Ok(new
             {
                 UserId = userId,
                 AvgDays = avgCompletionTime.ToString().Split('.')[0],
                 AvgHours = avgCompletionTime.ToString().Split('.')[1],
-                DatesForTaskIds = tasksDates
+                DatesForTaskIds = tasksDates,
+                FailedToSchedule = failedToSchedule
             });
         }
 

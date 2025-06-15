@@ -27,49 +27,149 @@ namespace Order.Services
         }
 
         // ВЫЧИСЛЕНИЕ ОПТИМАЛЬНОЙ ДАТЫ ДЛЯ НАЧАЛА ВЫПОЛНЕНИЯ ЗАДАЧИ ========================================
-        public Dictionary<int, DateOnly> CalculateStartDate(List<Models.Task> tasks, TimeSpan avgCompletionTime)
+        public (Dictionary<int, DateOnly> TasksDates, List<int> FailedToSchedule) CalculateStartDate(List<Models.Task> tasks, TimeSpan avgCompletionTime)
         {
             double bufferDays = avgCompletionTime.TotalDays * 1.5;
             int max_tasks_per_day = 5;
 
             Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
             Dictionary<DateOnly, int> dateTaskCounts = new Dictionary<DateOnly, int>();
+            List<int> failedToSchedule = new List<int>();
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
 
             foreach (Models.Task task in tasks)
             {
-                if (task.HardDeadline != null && task.DateDone == null)
+                DateOnly finalDate;
+
+                if (task.HardDeadline != null)
                 {
-                    double adjustedBufferDays = bufferDays;
-
-                    // Корректировка на приоритет
-                    if (task.Priority != null)
-                    {
-                        adjustedBufferDays *= (double)((4 - task.Priority) * 0.3);
+                    // Если у задачи есть срок, но он уже прошел, то не можем предложить оптимальную дату начала
+                    if (task.HardDeadline < today) {
+                        failedToSchedule.Add(task.TaskId);
                     }
-
-                    var finalDate = task.HardDeadline.Value.AddDays((int)-adjustedBufferDays);
-
-                    // Поиск ближайшей даты с количеством задач < max_tasks_per_day
-                    while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
-                    {
-                        finalDate = finalDate.AddDays(-1);
-                    }
-
-                    tasksDates.Add(task.TaskId, finalDate);
-
-                    if (dateTaskCounts.ContainsKey(finalDate))
-                    {
-                        dateTaskCounts[finalDate]++;
-                    }
+                    // У задачи есть срок и он позже сегодняшнего дня
                     else
                     {
-                        dateTaskCounts[finalDate] = 1;
+                        double adjustedBufferDays = bufferDays;
+
+                        if (task.Priority != null)
+                        {
+                            adjustedBufferDays *= (double)((4 - task.Priority) * 0.3);
+                        }
+
+                        // Рассчитываем предполагаемую дату начала с учётом буфера
+                        finalDate = task.HardDeadline.Value.AddDays((int)-adjustedBufferDays);
+
+                        // если вычисленная дата уже прошла, то выставляем сегодняшнюю
+                        if (finalDate < today)
+                        {
+                            bool failedToScheduleFlag = false;
+                            finalDate = today;
+
+                            // ищем подходящую дату дальше во времени
+                            // прибавляем по одному дню, пока не найдем свободный
+                            while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                            {
+                                finalDate = finalDate.AddDays(1);
+
+                                // если свободного дня до дедлайна нет, то запланировать не получится
+                                if (finalDate > task.HardDeadline.Value)
+                                {
+                                    failedToSchedule.Add(task.TaskId);
+                                    finalDate = default;
+                                    failedToScheduleFlag = true;
+                                    break;
+                                }
+                            }
+
+                            if (!failedToScheduleFlag)
+                            {
+                                tasksDates[task.TaskId] = finalDate;
+
+                                // повышаем счетчик кол-ва задач
+                                if (dateTaskCounts.ContainsKey(finalDate))
+                                    dateTaskCounts[finalDate]++;
+                                else
+                                    dateTaskCounts[finalDate] = 1;
+                            }
+                        }
+
+                        // если finalDate > today && finalDate < hardDeadline
+                        else
+                        {
+                            DateOnly originalStart = finalDate;
+                            bool successPlanningFlag = true;
+
+                            // Ищем ближайший свободный день, отсчитывая назад
+                            while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                            {
+                                finalDate = finalDate.AddDays(-1);
+
+                                // если превысили дедлайн — не удалось запланировать
+                                //if (finalDate > task.HardDeadline.Value)
+
+                                // если дошли до сегодняшней даты - не удалось запланировать
+                                if (finalDate < today)
+                                {
+                                    successPlanningFlag = false;
+                                    break;
+                                }
+                            }
+
+                            // если при отсчете назад не удалось запланировать, идем вперед к дедлайну
+                            if (!successPlanningFlag)
+                            {
+                                while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                                {
+                                    finalDate = finalDate.AddDays(1);
+
+                                    // если превысили дедлайн — не удалось запланировать
+                                    if (finalDate > task.HardDeadline.Value)
+                                    {
+                                        failedToSchedule.Add(task.TaskId);
+                                        finalDate = default;
+                                        successPlanningFlag = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (successPlanningFlag)
+                            {
+                                tasksDates[task.TaskId] = finalDate;
+                                if (dateTaskCounts.ContainsKey(finalDate))
+                                    dateTaskCounts[finalDate]++;
+                                else
+                                    dateTaskCounts[finalDate] = 1;
+                            }
+                        }
+                        
                     }
+                }
+                else
+                {
+                    // Нет дедлайна — ищем первый свободный день от today
+                    finalDate = today;
+
+                    while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                    {
+                        finalDate = finalDate.AddDays(1);
+                    }
+
+                    tasksDates[task.TaskId] = finalDate;
+
+                    // повышаем счетчик кол-ва задач
+                    if (dateTaskCounts.ContainsKey(finalDate))
+                        dateTaskCounts[finalDate]++;
+                    else
+                        dateTaskCounts[finalDate] = 1;
                 }
             }
 
-            return tasksDates;
+            return (tasksDates, failedToSchedule);
         }
+
 
         // Метод распределения задач по календарю без перегрузки
         public Dictionary<DateOnly, List<Models.Task>> DistributeTasks(List<Models.Task> tasks, TimeSpan avgCompletionTime)
