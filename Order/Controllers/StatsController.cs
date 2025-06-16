@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Ical.Net.CalendarComponents;
 using System.Net.Http;
 using Org.BouncyCastle.Asn1;
+using System.Linq;
 
 /*
  Контроллер для аналитики (статистика по выполнению задач пользователя)
@@ -112,6 +113,16 @@ namespace Order.Controllers
                 return NotFound();
 
             var tasksCompleted = user.Tasks.Where(t => t.DateDone.HasValue);
+            var dayTranslations = new Dictionary<string, string>
+                {
+                    { "Monday", "Понедельник" },
+                    { "Tuesday", "Вторник" },
+                    { "Wednesday", "Среда" },
+                    { "Thursday", "Четверг" },
+                    { "Friday", "Пятница" },
+                    { "Saturday", "Суббота" },
+                    { "Sunday", "Воскресенье" }
+                };
 
             // Инициализация карты: день недели -> часы -> счётчик
             var heatmap = Enum.GetValues<DayOfWeek>()
@@ -129,7 +140,58 @@ namespace Order.Controllers
                 heatmap[day][hour]++;
             }
 
-            return Ok(heatmap);
+            // Анализ данных
+            int totalTasks = tasksCompleted.Count();
+
+            var dayTotals = heatmap
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Values.Sum());
+
+            var hourTotals = Enumerable.Range(0, 24)
+                .ToDictionary(h => h, h =>
+                    heatmap.Sum(d => d.Value[h])
+                );
+
+            var mostActiveDay = dayTotals.OrderByDescending(kvp => kvp.Value).First();
+            var leastActiveDay = dayTotals.OrderBy(kvp => kvp.Value).First();
+
+            var mostActiveHour = hourTotals.OrderByDescending(kvp => kvp.Value).First();
+            var leastActiveHour = hourTotals.OrderBy(kvp => kvp.Value).First();
+
+            var mostActiveDayRu = dayTranslations[mostActiveDay.Key];
+            var leastActiveDayRu = dayTranslations[leastActiveDay.Key];
+
+            var averagePerDay = dayTotals.Values.Average();
+            var overloadThreshold = averagePerDay * 1.5;
+
+            var overloadDays = dayTotals
+                .Where(kvp => kvp.Value > overloadThreshold)
+                .Select(kvp => dayTranslations[kvp.Key])
+                .ToList();
+
+            string overloadNotice = overloadDays.Count > 0
+                ? $"Обратите внимание: в день (дни) {string.Join(", ", overloadDays)} отмечается высокая загруженность. " +
+                  $"Рекомендуется распределить задачи более равномерно в течение недели."
+                : null;
+
+            // Формирование интерпретации
+            var interpretation = new
+            {
+                TotalCompletedTasks = totalTasks,
+                MostActiveDay = mostActiveDayRu,
+                MostActiveHour = $"{mostActiveHour.Key}:00 – {mostActiveHour.Key + 1}:00",
+                LeastActiveDay = leastActiveDayRu,
+                LeastActiveHour = $"{leastActiveHour.Key}:00 – {leastActiveHour.Key + 1}:00",
+                SummaryText = $"Наиболее активное время выполнения задач: {mostActiveDayRu}, " +
+                      $"{mostActiveHour.Key}:00. Наименее активное — {leastActiveDayRu}, " +
+                      $"{leastActiveHour.Key}:00. Всего завершено задач: {totalTasks}.",
+                OverloadNotice = overloadNotice
+            };
+
+            return Ok(new
+            {
+                Heatmap = heatmap,
+                Interpretation = interpretation
+            });
         }
 
         // Рекомендации
