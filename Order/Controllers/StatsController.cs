@@ -234,6 +234,12 @@ namespace Order.Controllers
 
             var (tasksDates, failedToSchedule) = statService.CalculateStartDate(notCompletedTasks, avgCompletionTime);
 
+            Dictionary<int, string> tasksNames = new Dictionary<int, string>();
+            foreach(KeyValuePair<int, DateOnly> kvp in tasksDates){
+                Models.Task currentTask = await _context.Tasks.FirstOrDefaultAsync(t => t.TaskId == kvp.Key);
+                tasksNames[kvp.Key] = currentTask.Name;
+            }
+
             // avgDays + avgHours = среднее время выполнения задач по всей истории пользователя, в днях и часах
             // то есть дней может не быть, если пользователь быстро выполняет задачи, в пределах суток
             // разбито на две переменные для удобства отображения
@@ -244,6 +250,7 @@ namespace Order.Controllers
                 //AvgDays = avgCompletionTime.ToString().Split('.')[0],
                 //AvgHours = avgCompletionTime.ToString().Split('.')[1],
                 DatesForTaskIds = tasksDates,
+                TaskNames = tasksNames,
                 FailedToSchedule = failedToSchedule
             });
         }
@@ -285,70 +292,70 @@ namespace Order.Controllers
 
 
         // Вычисление возможных завалов на 30 дней вперед
-        [HttpGet("/api/overload-prediction-ML")]
-        public async Task<IActionResult> GetOverloadPrediction(Guid userId, string targetDateString, [FromServices] StatisticsService statService)
-        {
-            var user = await _context.Users
-               .Include(u => u.Tasks)
-               .FirstOrDefaultAsync(u => u.UserId == userId);
-            var tasks = user.Tasks.ToList();
+        //[HttpGet("/api/overload-prediction-ML")]
+        //public async Task<IActionResult> GetOverloadPrediction(Guid userId, string targetDateString, [FromServices] StatisticsService statService)
+        //{
+        //    var user = await _context.Users
+        //       .Include(u => u.Tasks)
+        //       .FirstOrDefaultAsync(u => u.UserId == userId);
+        //    var tasks = user.Tasks.ToList();
 
-            if (!DateOnly.TryParseExact(targetDateString, "dd.MM.yyyy", out var targetDate))
-                return BadRequest("Неверный формат даты. Используйте dd.MM.yyyy");
-            //Console.WriteLine(targetDate);
+        //    if (!DateOnly.TryParseExact(targetDateString, "dd.MM.yyyy", out var targetDate))
+        //        return BadRequest("Неверный формат даты. Используйте dd.MM.yyyy");
+        //    //Console.WriteLine(targetDate);
 
-            try
-            {
-                var risk = await statService.GetOverloadPrediction(tasks, targetDate);
+        //    try
+        //    {
+        //        var risk = await statService.GetOverloadPrediction(tasks, targetDate);
 
-                return Ok(new { riskScore = risk });
-            }
-            catch (Exception ex) { 
-                return BadRequest("Прежде чем получить предсказание, необходимо обучить модель. Отправьте запрос на эндпоинт /api/fit-model-ML");
-            }
+        //        return Ok(new { riskScore = risk });
+        //    }
+        //    catch (Exception ex) { 
+        //        return BadRequest("Прежде чем получить предсказание, необходимо обучить модель. Отправьте запрос на эндпоинт /api/fit-model-ML");
+        //    }
             
-        }
+        //}
 
-        [HttpGet("api/most-overload-day-ML")]
-        public async Task<IActionResult> GetMostOverloadDay(Guid userId, string targetDateString, [FromServices] StatisticsService statService)
-        {
-            var user = await _context.Users
-               .Include(u => u.Tasks)
-               .FirstOrDefaultAsync(u => u.UserId == userId);
-            var tasks = user.Tasks.ToList();
+        //[HttpGet("api/most-overload-day-ML")]
+        //public async Task<IActionResult> GetMostOverloadDay(Guid userId, string targetDateString, [FromServices] StatisticsService statService)
+        //{
+        //    var user = await _context.Users
+        //       .Include(u => u.Tasks)
+        //       .FirstOrDefaultAsync(u => u.UserId == userId);
+        //    var tasks = user.Tasks.ToList();
 
-            if (!DateOnly.TryParseExact(targetDateString, "dd.MM.yyyy", out var targetDate))
-                return BadRequest("Неверный формат даты. Используйте dd.MM.yyyy");
-            //Console.WriteLine(targetDate);
+        //    if (!DateOnly.TryParseExact(targetDateString, "dd.MM.yyyy", out var targetDate))
+        //        return BadRequest("Неверный формат даты. Используйте dd.MM.yyyy");
+        //    //Console.WriteLine(targetDate);
 
-            try
-            {
-                var risk = await statService.GetOverloadPrediction(tasks, targetDate);
+        //    try
+        //    {
+        //        var risk = await statService.GetOverloadPrediction(tasks, targetDate);
 
-                return Ok(new { riskScore = risk });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Прежде чем получить предсказание, необходимо обучить модель. Отправьте запрос на эндпоинт /api/fit-model-ML");
-            }
-        }
+        //        return Ok(new { riskScore = risk });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest("Прежде чем получить предсказание, необходимо обучить модель. Отправьте запрос на эндпоинт /api/fit-model-ML");
+        //    }
+        //}
 
-        // Метод для генерации данных и обучения модели
-        [HttpGet("/api/fit-model-ML")]
-        public async Task<IActionResult> fitModel()
-        {
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync("/train-model", new { });
-                var rawJson = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("RAW JSON:");
-                Console.WriteLine(rawJson);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+        //// Метод для генерации данных и обучения модели
+        //[HttpGet("/api/fit-model-ML")]
+        //public async Task<IActionResult> fitModel()
+        //{
+        //    try
+        //    {
+        //        var response = await _httpClient.PostAsJsonAsync("/train-model", new { });
+        //        var rawJson = await response.Content.ReadAsStringAsync();
+        //        Console.WriteLine("RAW JSON:");
+        //        Console.WriteLine(rawJson);
+        //        return Ok();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
     }
 }

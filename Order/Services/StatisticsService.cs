@@ -7,6 +7,7 @@ using Order.Models.DTO;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Order.Services
 {
@@ -30,7 +31,7 @@ namespace Order.Services
         // ВЫЧИСЛЕНИЕ ОПТИМАЛЬНОЙ ДАТЫ ДЛЯ НАЧАЛА ВЫПОЛНЕНИЯ ЗАДАЧИ ========================================
         public (Dictionary<int, DateOnly> TasksDates, List<int> FailedToSchedule) CalculateStartDate(List<Models.Task> tasks, AverageCompletionTime avgCompletionTime)
         {
-            // конвертация часов, минут, секунд в доли дня для учета буфера
+            // конвертация часов, минут, секунд в доли дня
             double totalDays = avgCompletionTime.Days
                     + avgCompletionTime.Hours / 24.0
                     + avgCompletionTime.Minutes / 1440.0  // 24*60 = 1440
@@ -65,8 +66,6 @@ namespace Order.Services
                         {
                             adjustedBufferDays *= (double)((4 - task.Priority) * 0.3);
                         }
-
-                        // Рассчитываем предполагаемую дату начала с учётом буфера
                         finalDate = task.HardDeadline.Value.AddDays((int)-adjustedBufferDays);
 
                         // если вычисленная дата уже прошла, то выставляем сегодняшнюю
@@ -299,74 +298,79 @@ namespace Order.Services
 
         // Метод для отправки запроса на питон для получения прогноза завала
         // Прогноз получается для каждого дня на 7 дней вперед от переданной targetDate
-        public async Task<Dictionary<DateOnly, double>> GetOverloadPrediction(List<Models.Task> tasks, DateOnly startDate)
-        {
-            var resultDict = new Dictionary<DateOnly, double>();
-
-            for (int i = 0; i < 8; i++)
-            {
-                var targetDate = startDate.AddDays(i);
-                var prev3Days = targetDate.AddDays(-3);
-
-                // кол-во просроченных задач за 3 дня до даты
-                var overdueLast3d = tasks.Count(t =>
-                    t.DateDone.HasValue &&
-                    t.HardDeadline.HasValue &&
-                    DateOnly.FromDateTime(t.DateDone.Value) > t.HardDeadline &&
-                    DateOnly.FromDateTime(t.DateDone.Value) >= prev3Days &&
-                    DateOnly.FromDateTime(t.DateDone.Value) < targetDate);
-
-                // кол-во задач с высоким приоритетом в эту дату
-                var highPriority = tasks.Count(t =>
-                    t.DateCreated.HasValue &&
-                    DateOnly.FromDateTime(t.DateCreated.Value) == targetDate &&
-                    t.Priority >= 3);
-
-                // ср вр выполнения задач 
-                var completedTasks = tasks
-                    .Where(t => t.DateDone.HasValue && t.DateCreated.HasValue)
-                    .ToList();
-
-                double avgDuration = completedTasks.Any()
-                    ? completedTasks.Average(t => (t.DateDone.Value - t.DateCreated.Value).TotalHours)
-                    : 0.0;
-
-                // кол-во активных задач, созданных когда-либо до этой даты
-                var activeTasks = tasks.Count(t =>
-                    t.Status != true &&
-                    t.DateCreated.HasValue &&
-                    DateOnly.FromDateTime(t.DateCreated.Value) <= targetDate);
-
-                // все задачи, дедлайн которых - эта дата
-                var total_tasks = tasks.Count(t =>
-                        t.HardDeadline != null &&
-                        t.HardDeadline == targetDate);
-
-                var request = new
-                {
-                    overdue_last_3d = overdueLast3d,
-                    high_priority_due = highPriority,
-                    total_tasks_due = total_tasks,
-                    avg_total = Math.Round(avgDuration, 2),
-                    active_tasks = activeTasks
-                };
-
-                Console.WriteLine($"Запрос на дату {targetDate}:");
-                Console.WriteLine(request);
-
-                var response = await _httpClient.PostAsJsonAsync("/predict", request);
-                var rawJson = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("RAW JSON:");
-                Console.WriteLine(rawJson);
-
-                var result = await response.Content.ReadFromJsonAsync<Dictionary<string, double>>();
-                resultDict[targetDate] = result["probability_zaval"];
-            }
-
-            return resultDict;
-        }
-        //public async Task<Dictionary<DateOnly, double>> GetMostOverloadDay(List<Models.Task> tasks, DateOnly startDate)
+        //public async Task<Dictionary<DateOnly, double>> GetOverloadPrediction(List<Models.Task> tasks, DateOnly startDate)
         //{
+        //    var resultDict = new Dictionary<DateOnly, double>();
+
+        //    for (int i = 0; i < 8; i++)
+        //    {
+        //        var targetDate = startDate.AddDays(i);
+        //        var prev3Days = targetDate.AddDays(-3);
+
+        //        // кол-во просроченных задач за 3 дня до даты
+        //        var overdueLast3d = tasks.Count(t =>
+        //            t.DateDone.HasValue &&
+        //            t.HardDeadline.HasValue &&
+        //            DateOnly.FromDateTime(t.DateDone.Value) > t.HardDeadline &&
+        //            DateOnly.FromDateTime(t.DateDone.Value) >= prev3Days &&
+        //            DateOnly.FromDateTime(t.DateDone.Value) < targetDate);
+
+        //        // кол-во задач с высоким приоритетом в эту дату
+        //        var highPriority = tasks.Count(t =>
+        //            t.DateCreated.HasValue &&
+        //            DateOnly.FromDateTime(t.DateCreated.Value) == targetDate &&
+        //            t.Priority >= 3);
+
+        //        // ср вр выполнения задач 
+        //        var completedTasks = tasks
+        //            .Where(t => t.DateDone.HasValue && t.DateCreated.HasValue)
+        //            .ToList();
+
+        //        double avgDuration = completedTasks.Any()
+        //            ? completedTasks.Average(t => (t.DateDone.Value - t.DateCreated.Value).TotalHours)
+        //            : 0.0;
+
+        //        // кол-во активных задач, созданных когда-либо до этой даты
+        //        var activeTasks = tasks.Count(t =>
+        //            t.Status != true &&
+        //            t.DateCreated.HasValue &&
+        //            DateOnly.FromDateTime(t.DateCreated.Value) <= targetDate);
+
+        //        // все задачи, дедлайн которых - эта дата
+        //        var total_tasks = tasks.Count(t =>
+        //                t.HardDeadline != null &&
+        //                t.HardDeadline == targetDate);
+
+        //        var request = new
+        //        {
+        //            overdue_last_3d = overdueLast3d,
+        //            high_priority_due = highPriority,
+        //            total_tasks_due = total_tasks,
+        //            avg_total = Math.Round(avgDuration, 2),
+        //            active_tasks = activeTasks
+        //        };
+
+        //        Console.WriteLine($"Запрос на дату {targetDate}:");
+        //        Console.WriteLine(request);
+
+        //        var response = await _httpClient.PostAsJsonAsync("/predict", request);
+        //        var rawJson = await response.Content.ReadAsStringAsync();
+        //        Console.WriteLine("RAW JSON:");
+        //        Console.WriteLine(rawJson);
+
+        //        var result = await response.Content.ReadFromJsonAsync<Dictionary<string, double>>();
+        //        resultDict[targetDate] = result["probability_zaval"];
+        //    }
+
+        //    return resultDict;
+        //}
+
+        //public KeyValuePair<DateOnly, double>? GetMostOverloadDay(List<Models.Task> tasks, DateOnly startDate)
+        //{
+        //    var data = GetOverloadPrediction(tasks, startDate);
+        //    var maxPair = data.MaxBy(kv => kv.Value);
+
+        //    return System.Threading.Tasks.Task.FromResult<KeyValuePair<DateOnly, double>?>(maxPair);
         //}
     }
 }

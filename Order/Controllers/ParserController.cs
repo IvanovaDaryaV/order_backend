@@ -11,10 +11,10 @@ namespace Order.Controllers
     [Route("api/events")]
     public class ParserController : Controller
     {
-        private readonly EventParser _eventParser;
+        private readonly EventParserService _eventParser;
         private readonly ApplicationDbContext _context;
 
-        public ParserController(EventParser eventParser, ApplicationDbContext context)
+        public ParserController(EventParserService eventParser, ApplicationDbContext context)
         {
             _eventParser = eventParser;
             _context = context;

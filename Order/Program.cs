@@ -129,7 +129,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddHttpClient<ScheduleFetcherService>();
-builder.Services.AddHttpClient<EventParser>();
+builder.Services.AddHttpClient<EventParserService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))

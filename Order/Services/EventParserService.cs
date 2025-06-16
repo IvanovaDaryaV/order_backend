@@ -12,11 +12,11 @@ using System.Collections;
 
 namespace Order.Services
 {
-    public class EventParser
+    public class EventParserService
     {
         private readonly HttpClient _httpClient;
 
-        public EventParser(HttpClient httpClient)
+        public EventParserService(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
@@ -68,14 +68,9 @@ namespace Order.Services
             return events;
         }
 
-        // Получение новостей ИГИП, ШКН
         public async Task<List<string>> GetEventsTMN(string link)
         {
             var events = new List<string>();
-
-            //for (int page = 1; page <= 5; page++)
-            //{
-                //instName = $"https://www.utmn.ru/igip/?PAGEN_1={page}";
 
             var response = await _httpClient.GetAsync(link);
             var pageHtml = await response.Content.ReadAsStringAsync();
@@ -84,7 +79,6 @@ namespace Order.Services
 
             events = new List<string>();
 
-            // XPath для поиска блоков с событиями
             var eventNodes = htmlDoc.DocumentNode.SelectNodes("//div[contains(@class, 'news-item')]");
             if (eventNodes != null)
             {
@@ -111,10 +105,10 @@ namespace Order.Services
             {
                 Console.WriteLine("События не найдены на странице.");
             }
-            foreach (var ev in events)
-            {
-                Console.WriteLine(ev);
-            }
+            //foreach (var ev in events)
+            //{
+            //    Console.WriteLine(ev);
+            //}
             
             return events;
         }

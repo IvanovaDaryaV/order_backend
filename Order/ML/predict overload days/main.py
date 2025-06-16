@@ -1,13 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
-import numpy as np
 import traceback
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-import pandas as pd
-import joblib
 
 import pandas as pd
 import numpy as np
