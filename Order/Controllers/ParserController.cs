@@ -23,47 +23,31 @@ namespace Order.Controllers
         private static readonly Dictionary<string, string> InstituteNewsUrls = new()
         {
             { "official", "https://www.utmn.ru/news/events/" }, // общие новости
-            { "igip", "https://www.utmn.ru/igip/" },            // ИГИП
-            { "scs", "https://www.utmn.ru/scs/novosti/" },      // ШКН
-            { "ihss", "https://www.utmn.ru/ihss/" },            // СОЦГУМ
-            { "ifk", "https://www.utmn.ru/ifk/" },              // институт ФИЗРЫ
-            { "riic", "https://www.utmn.ru/riic/events/" },     // рег. институт междунар. сотрудничества
-            { "fei", "https://www.utmn.ru/fei/" },              // ФЭИ
-            { "sns", "https://www.utmn.ru/sns/" },              // шк естественных наук
-            { "soe", "https://www.utmn.ru/soe/" },              // шк образования
+            { "Институт государства и права", "https://www.utmn.ru/igip/" },            // ИГИП
+            { "Школа компьютерных наук", "https://www.utmn.ru/scs/novosti/" },      // ШКН
+            { "Институт социально-гуманитарных наук", "https://www.utmn.ru/ihss/" },            // СОЦГУМ
+            { "Институт физической культуры", "https://www.utmn.ru/ifk/" },              // институт ФИЗРЫ
+            { "Региональный институт международного сотрудничества", "https://www.utmn.ru/riic/events/" },     // рег. институт междунар. сотрудничества
+            { "Финансово-экономический институт", "https://www.utmn.ru/fei/" },              // ФЭИ
+            { "Школа естественных наук", "https://www.utmn.ru/sns/" },              // шк естественных наук
+            { "Школа образования", "https://www.utmn.ru/soe/" },              // шк образования
 
         };
 
         // получение новостей с сайта
         [HttpGet]
-        public async Task<IActionResult> GetEventsTMNofficial(string? instName)
+        public async Task<IActionResult> GetEventsTMNofficial()
         {
             List<string> events = new List<string>();
-            if (instName == null)
-                instName = String.Empty;
+            
+            var result = new List<NewsItem>();
+            foreach (string url in InstituteNewsUrls.Keys)
+            {
+                var ev = await _eventParser.GetEventsTMN(InstituteNewsUrls[url], url);
+                result.AddRange(ev);
+            }
 
-            if (instName == "official")
-            {
-                events = await _eventParser.GetEventsTMNofficial(InstituteNewsUrls["official"]);
-            }
-            else if (InstituteNewsUrls.ContainsKey(instName))
-            {
-                events = await _eventParser.GetEventsTMN(InstituteNewsUrls[instName]);
-            }
-            else
-            {
-                List<string> result = new List<string>();
-                foreach (string url in InstituteNewsUrls.Keys)
-                {
-                    events = await _eventParser.GetEventsTMN(InstituteNewsUrls[url]);
-                    foreach (string ev in events)
-                    {
-                        result.Add(ev);
-                    }
-                }
-                return Ok(result);
-            }
-            return Ok(events);
+            return Ok(result);
         }
 
         [HttpPost("add-events-to-calender")]

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using System.Collections;
+using Order.Models;
 //using PorterStemmer;
 
 namespace Order.Services
@@ -68,16 +69,15 @@ namespace Order.Services
             return events;
         }
 
-        public async Task<List<string>> GetEventsTMN(string link)
+        public async Task<List<NewsItem>> GetEventsTMN(string link, string instName)
         {
-            var events = new List<string>();
 
             var response = await _httpClient.GetAsync(link);
             var pageHtml = await response.Content.ReadAsStringAsync();
             var htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(pageHtml);
 
-            events = new List<string>();
+            var events = new List<NewsItem>();
 
             var eventNodes = htmlDoc.DocumentNode.SelectNodes("//div[contains(@class, 'news-item')]");
             if (eventNodes != null)
@@ -95,9 +95,18 @@ namespace Order.Services
                     var title = titleNode?.InnerText.Trim();
                     var extra = extraTextNode?.InnerText.Trim();
 
+                    //if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
+                    //{
+                    //    events.Add($"{date}: {title}. {extra}");
+                    //}
                     if (!string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(title))
                     {
-                        events.Add($"{date}: {title}. {extra}");
+                        events.Add(new NewsItem
+                        {
+                            Date = date,
+                            Title = $"{title}. {extra}",
+                            Institute = instName
+                        });
                     }
                 }
             }

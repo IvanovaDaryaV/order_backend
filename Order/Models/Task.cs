@@ -30,6 +30,10 @@ namespace Order.Models
         [Required]
         [Column(TypeName = "uuid")]
         public Guid UserId { get; set; }
+
+        //[Column(TypeName = "uuid")]
+        //public Guid? AssignedToUserId; // для делегирования!!!
+
         public int? EventId { get; set; }
         public DateOnly? CalendarDate { get; set; }
         public bool? IsPrivate { get; set; }
