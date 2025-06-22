@@ -31,8 +31,8 @@ namespace Order.Models
         [Column(TypeName = "uuid")]
         public Guid UserId { get; set; }
 
-        //[Column(TypeName = "uuid")]
-        //public Guid? AssignedToUserId; // для делегирования!!!
+        [Column(TypeName = "uuid")]
+        public Guid? AssignedToUserId { get; set; } // для делегирования
 
         public int? EventId { get; set; }
         public DateOnly? CalendarDate { get; set; }
