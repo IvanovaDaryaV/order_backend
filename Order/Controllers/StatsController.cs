@@ -18,6 +18,7 @@ using System.Linq;
 
 namespace Order.Controllers
 {
+    [Route("/api/")]
     public class StatsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -33,22 +34,20 @@ namespace Order.Controllers
         }
 
         // Основной эндпоинт общей статистики
-        [HttpGet("/api/overview")]
+        [HttpGet("overview")]
         public async Task<IActionResult> GetStats(Guid userId)
         {
             ICollection<Models.Task> tasks;
-            try
-            {
-                var user = await _context.Users
-                .Include(u => u.Tasks)
-                .FirstOrDefaultAsync(u => u.UserId == userId);
-                tasks = user.Tasks;
-            }
-            catch(NullReferenceException)
-            {
+            var user = await _context.Users
+                        .Include(u => u.Tasks)
+                        .FirstOrDefaultAsync(u => u.UserId == userId);
+                        
+            if (user?.Tasks == null)
                 return Ok(new { });
-            }
-            if (tasks.Count != 0)
+
+            tasks = user.Tasks;
+
+            if (tasks != null)
             {
                 // Получение статистики
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -63,8 +62,9 @@ namespace Order.Controllers
                     );
 
                 var avgDelay = tasksCompleted
-                    //.Where(t => t.HardDeadline != null && t.DateDone != null)
-                    .Where(t => t.Status == true)
+                    .Where(t => t.Status == true && t.DateDone.HasValue &&
+                                t.HardDeadline.HasValue &&
+                                t.DateDone.Value > t.HardDeadline.Value.ToDateTime(TimeOnly.MinValue))
                     .Select(t => (t.DateDone.Value.Date - t.HardDeadline.Value.ToDateTime(TimeOnly.MinValue)).TotalHours)
                     .DefaultIfEmpty()
                     .Average();
@@ -102,7 +102,7 @@ namespace Order.Controllers
             
         }
 
-        [HttpGet("/api/heatmap")]
+        [HttpGet("heatmap")]
         public async Task<IActionResult> GetHeatmap(Guid userId)
         {
             var user = await _context.Users
@@ -195,7 +195,7 @@ namespace Order.Controllers
         }
 
         // Рекомендации
-        [HttpGet("/api/recommendations")]
+        [HttpGet("recommendations")]
         public async Task<IActionResult> GetRecommendations(Guid userId)
         {
             var user = await _context.Users
@@ -275,7 +275,7 @@ namespace Order.Controllers
             });
         }
 
-        [HttpGet("/api/intellectual-planning")]
+        [HttpGet("intellectual-planning")]
         public async Task<IActionResult> GetPlan(Guid userId, [FromServices] StatisticsService statService)
         {
             var user = await _context.Users

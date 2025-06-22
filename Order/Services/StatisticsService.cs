@@ -38,10 +38,11 @@ namespace Order.Services
                     + avgCompletionTime.Seconds / 86400.0; // 24*60*60 = 86400
 
             double bufferDays = totalDays * 1.5;
-            int max_tasks_per_day = 5;
 
+            int max_difficulty_per_day = 10;
+            
             Dictionary<int, DateOnly> tasksDates = new Dictionary<int, DateOnly>();
-            Dictionary<DateOnly, int> dateTaskCounts = new Dictionary<DateOnly, int>();
+            Dictionary<DateOnly, int> dateDifficultyCounts = new Dictionary<DateOnly, int>(); // дата + ее загруженность
             List<int> failedToSchedule = new List<int>();
 
             var today = DateOnly.FromDateTime(DateTime.Today);
@@ -49,6 +50,9 @@ namespace Order.Services
             foreach (Models.Task task in tasks)
             {
                 DateOnly finalDate;
+                int priority = task.Priority ?? 2;     // значение по умолчанию — средний приоритет
+                int complexity = task.Complexity ?? 1; // значение по умолчанию — минимальная сложность
+
 
                 if (task.HardDeadline != null)
                 {
@@ -62,10 +66,9 @@ namespace Order.Services
                     {
                         double adjustedBufferDays = bufferDays;
 
-                        if (task.Priority != null)
-                        {
-                            adjustedBufferDays *= (double)((4 - task.Priority) * 0.3);
-                        }
+                        adjustedBufferDays *= ((4 - priority) * 0.3) + (complexity * 0.1);
+                        // чем больше приоритет и сложность, тем раньше нужно начинать задачу
+                        
                         finalDate = task.HardDeadline.Value.AddDays((int)-adjustedBufferDays);
 
                         // если вычисленная дата уже прошла, то выставляем сегодняшнюю
@@ -76,7 +79,10 @@ namespace Order.Services
 
                             // ищем подходящую дату дальше во времени
                             // прибавляем по одному дню, пока не найдем свободный
-                            while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                            // учитывается загруженность дня с учетом текущей задачи
+                            while (dateDifficultyCounts.ContainsKey(finalDate) &&
+                                    dateDifficultyCounts[finalDate] + complexity < max_difficulty_per_day)
+
                             {
                                 finalDate = finalDate.AddDays(1);
 
@@ -94,11 +100,11 @@ namespace Order.Services
                             {
                                 tasksDates[task.TaskId] = finalDate;
 
-                                // повышаем счетчик кол-ва задач
-                                if (dateTaskCounts.ContainsKey(finalDate))
-                                    dateTaskCounts[finalDate]++;
+                                // повышаем суммарную сложность задач
+                                if (dateDifficultyCounts.ContainsKey(finalDate))
+                                    dateDifficultyCounts[finalDate] += complexity;
                                 else
-                                    dateTaskCounts[finalDate] = 1;
+                                    dateDifficultyCounts[finalDate] = complexity;
                             }
                         }
 
@@ -109,7 +115,8 @@ namespace Order.Services
                             bool successPlanningFlag = true;
 
                             // Ищем ближайший свободный день, отсчитывая назад
-                            while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                            while (dateDifficultyCounts.ContainsKey(finalDate) &&
+                                    dateDifficultyCounts[finalDate] + complexity >= max_difficulty_per_day)
                             {
                                 finalDate = finalDate.AddDays(-1);
 
@@ -128,7 +135,8 @@ namespace Order.Services
                             // если при отсчете назад не удалось запланировать, идем вперед к дедлайну
                             if (!successPlanningFlag)
                             {
-                                while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+                                while (dateDifficultyCounts.ContainsKey(finalDate) &&
+                                    dateDifficultyCounts[finalDate] + complexity >= max_difficulty_per_day)
                                 {
                                     finalDate = finalDate.AddDays(1);
 
@@ -146,10 +154,10 @@ namespace Order.Services
                             if (successPlanningFlag)
                             {
                                 tasksDates[task.TaskId] = finalDate;
-                                if (dateTaskCounts.ContainsKey(finalDate))
-                                    dateTaskCounts[finalDate]++;
+                                if (dateDifficultyCounts.ContainsKey(finalDate))
+                                    dateDifficultyCounts[finalDate] += complexity;
                                 else
-                                    dateTaskCounts[finalDate] = 1;
+                                    dateDifficultyCounts[finalDate] = complexity;
                             }
                         }
 
@@ -160,7 +168,12 @@ namespace Order.Services
                     // Нет дедлайна — ищем первый свободный день от today
                     finalDate = today;
 
-                    while (dateTaskCounts.ContainsKey(finalDate) && dateTaskCounts[finalDate] >= max_tasks_per_day)
+
+                    // идем вперед до тех пор, пока не найдем незагруженный день
+                    // учитывать, что к загруженности прибавится еще сложность текущей задачи
+                    while (dateDifficultyCounts.ContainsKey(finalDate) &&
+                            dateDifficultyCounts[finalDate] + complexity >= max_difficulty_per_day)
+
                     {
                         finalDate = finalDate.AddDays(1);
                     }
@@ -168,13 +181,17 @@ namespace Order.Services
                     tasksDates[task.TaskId] = finalDate;
 
                     // повышаем счетчик кол-ва задач
-                    if (dateTaskCounts.ContainsKey(finalDate))
-                        dateTaskCounts[finalDate]++;
+                    if (dateDifficultyCounts.ContainsKey(finalDate))
+                        dateDifficultyCounts[finalDate] += complexity;
                     else
-                        dateTaskCounts[finalDate] = 1;
+                        dateDifficultyCounts[finalDate] = complexity;
+
                 }
             }
-
+            foreach(KeyValuePair<DateOnly, int> KVP in dateDifficultyCounts)
+            {
+                Console.WriteLine($"{KVP.Key} : {KVP.Value}");
+            }
             return (tasksDates, failedToSchedule);
         }
 

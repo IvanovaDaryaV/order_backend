@@ -25,7 +25,7 @@ namespace Order.Models
         [JsonIgnore]
         public int? ContextId { get; set; }
         public int? Priority { get; set; }
-        public int? Complexity { get; set; }  // сложность 1-10
+        public int? Complexity { get; set; }  // сложность 1-5
         public string? Type {  get; set; }  // тип задачи для аналитики: пользователь выбирает сам
         [Required]
         [Column(TypeName = "uuid")]
